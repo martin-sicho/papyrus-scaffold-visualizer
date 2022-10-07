@@ -1,6 +1,6 @@
 ### Custom
 .idea/
-/papyrus/data/
+/examples/data
 
 ### Python template
 # Byte-compiled / optimized / DLL files

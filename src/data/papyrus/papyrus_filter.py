@@ -1,27 +1,36 @@
 import os.path
 
+import pandas as pd
 from papyrus_scripts.reader import read_papyrus
 from papyrus_scripts.preprocess import keep_quality, keep_accession
 from papyrus_scripts.preprocess import consume_chunks
 
-from papyrus import OUTDIR
-
-
-def papyrus_filter(acc_key: list, quality: str, drop_duplicates: bool = True, chunk_size : int = 1e5, outfile: str = None):
+def papyrus_filter(acc_key: list, quality: str, outdir : str, prefix : str = None, drop_duplicates: bool = True, chunk_size : int = 1e5, use_existing : bool = True, stereo : bool = False, plusplus : bool = False):
     """
     Filters the downloaded papyrus dataset for quality and accession key (UniProt) and outputs a .tsv file of all compounds fulfilling these requirements.
 
     Args:
-        outfile: path to the output file
         acc_key: list of UniProt accession keys
         quality: str with minimum quality of dataset to keep
+        outdir: path to the location of Papyrus data
+        prefix: prefix for the output file
         drop_duplicates: boolean to drop duplicates from the final dataset
         chunk_size: integer of chunks to process one at the time
+        use_existing: if `True`, use existing data if available
+        stereo: if `True`, read stereochemistry data (if available)
+        plusplus: if `True`, read high quality Papyrus++ data (if available)
     Output:
         .tsv file with all compounds fulfilling the requirements
     """
+    prefix = prefix or f"{'_'.join(acc_key)}_{quality}"
+    outfile = os.path.join(outdir, f"{prefix}.tsv")
+
+    if use_existing and os.path.exists(outfile):
+        print(f"Using existing data from {outfile}...")
+        return pd.read_table(outfile, sep="\t", header=0), outfile
+
     # read data
-    sample_data = read_papyrus(is3d=False, chunksize=chunk_size, source_path=OUTDIR)
+    sample_data = read_papyrus(is3d=stereo, chunksize=chunk_size, source_path=outdir, plusplus=plusplus)
     print("Read all data.")
 
     # data filters
@@ -42,23 +51,10 @@ def papyrus_filter(acc_key: list, quality: str, drop_duplicates: bool = True, ch
         print(f"Filtered out {amnt_mols_i - amnt_mols_f} duplicate molecules")
 
     # write filtered data to .tsv file
-    if outfile:
-        filtered_data.to_csv(outfile, sep= "\t", index=False)
-        print(f"Wrote data to file {name}.tsv")
+    filtered_data.to_csv(outfile, sep= "\t", index=False)
+    print(f"Wrote data to file '{outfile}'.")
 
-    return filtered_data
-
-if __name__ == "__main__":
- 
-    # variables
-
-    # acc_key = ["P32246", "P51681", "P51685",] # CCR1,5,8 
-    acc_key = ["P41597"] # CCR2
-    quality = "low" # choose from {"high", "medium", "low"}
-    name = "hCCR2_LIGANDS"
-
-    # call function
-    papyrus_filter(acc_key, quality, drop_duplicates=False, chunk_size=1000_000, outfile=os.path.join(OUTDIR, f"./{name}.tsv"))
+    return filtered_data, outfile
 
 
 

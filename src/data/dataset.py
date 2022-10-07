@@ -10,16 +10,17 @@ from typing import List
 
 import numpy as np
 import pandas as pd
+from pandas import DataFrame
 from rdkit.Chem import PandasTools
 
-from clustering.descriptors import Descriptor
-from clustering.scaffolds import Scaffold
+from src.clustering.descriptors import Descriptor
+from src.clustering.scaffolds import Scaffold
 
 
 class DataSet(ABC):
 
     @abstractmethod
-    def asDataFrame(self, smiles_col = 'SMILES'):
+    def asDataFrame(self, smiles_col = 'SMILES', mol_col = 'RDMol') -> DataFrame:
         pass
 
     @abstractmethod
@@ -102,19 +103,27 @@ class DataSet(ABC):
         """
         pass
 
-    @abstractmethod
     @property
+    @abstractmethod
     def hasDescriptors(self):
         pass
 
-    @abstractmethod
     @property
+    @abstractmethod
     def hasScaffolds(self):
         pass
 
-    @abstractmethod
     @property
+    @abstractmethod
     def hasScaffoldGroups(self):
+        pass
+
+    @abstractmethod
+    def getSubset(self, prefix : str):
+        pass
+
+    @abstractmethod
+    def getNames(self):
         pass
 
     @abstractmethod
@@ -136,11 +145,14 @@ class DataSet(ABC):
 
 class DataSetTSV(DataSet):
 
-    def __init__(self, path, mol_col = 'SMILES'):
+    def __init__(self, path, mol_col = 'SMILES', data : DataFrame = None):
         self.smilesCol = mol_col
         self.molCol = "RDMol"
         self.path = path
-        self._data = pd.read_csv(self.path, sep='\t') if os.path.exists(self.path) else None
+        if data is not None:
+            self._data = data
+        else:
+            self._data = pd.read_csv(self.path, sep='\t') if os.path.exists(self.path) else None
         PandasTools.AddMoleculeColumnToFrame(self._data, smilesCol=mol_col, molCol=self.molCol)
 
     def asDataFrame(self, smiles_col = 'SMILES'):
@@ -149,14 +161,22 @@ class DataSetTSV(DataSet):
         else:
             return self._data.rename(columns={self.smilesCol: smiles_col})
 
-    def addDescriptors(self, descriptors: List[Descriptor]):
+    def addDescriptors(self, descriptors: List[Descriptor], recalculate = False):
         for descriptor in descriptors:
-            self._data[f"Descriptor_{descriptor}"] = self._data.apply(lambda row: descriptor(row[self.molCol]), axis=1)
+            recalculate = recalculate or len([x for x in self.getDescriptorsNames() if x.startswith(f"Descriptor_{descriptor}")]) == 0
+            if not recalculate:
+                continue
+            values = self._data.apply(lambda row: descriptor(row[self.smilesCol]), axis=1).to_list()
+            values = pd.DataFrame(values, columns=[f"Descriptor_{descriptor}_{idx}" for idx in range(len(values[0]))])
+            self._data = pd.concat([self._data, values], axis=1)
             self.save()
 
     def addScaffolds(self, scaffolds: List[Scaffold]):
         for scaffold in scaffolds:
-            self._data[f"Scaffold_{scaffold}"] = self._data.apply(lambda row: scaffold(row[self.molCol]), axis=1)
+            if f"Scaffold_{scaffold}" in self._data.columns:
+                continue
+
+            self._data[f"Scaffold_{scaffold}"] = self._data.apply(lambda row: scaffold(row[self.smilesCol]), axis=1)
             PandasTools.AddMoleculeColumnToFrame(self._data, smilesCol=f"Scaffold_{scaffold}", molCol=f"Scaffold_{scaffold}_{self.molCol}")
             self.save()
 
@@ -211,4 +231,11 @@ class DataSetTSV(DataSet):
 
     def save(self, path = None):
         self._data.to_csv(path if path else self.path, sep='\t', index=False, header=True)
+
+    def getSubset(self, prefix : str):
+        if self._data.columns.str.startswith(prefix).any():
+            return self._data[self._data.columns[self._data.columns.str.startswith(prefix)]]
+
+    def getNames(self):
+        return self._data.columns
 

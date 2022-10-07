@@ -6,6 +6,8 @@ On: 05.10.22, 10:13
 """
 from abc import abstractmethod, ABC
 
+import numpy as np
+
 
 class Descriptor(ABC):
     """
@@ -53,7 +55,11 @@ class MorganFP(Descriptor):
 
     def __call__(self, mol):
         mol = self._convertMol(mol) if isinstance(mol, str) else mol
-        return self._convertFP(self._morgan(mol, *self._args, **self._kwargs))
+        fp = self._morgan(mol, *self._args, **self._kwargs)
+        ln = len(fp)
+        ret = np.zeros(ln)
+        self._convertFP(fp, ret)
+        return ret
 
     def __str__(self):
         return "MorganFP"
