@@ -5,7 +5,6 @@ Created by: Martin Sicho
 On: 05.10.22, 16:37
 """
 import molplotly
-import numpy as np
 import pandas as pd
 import plotly.express as px
 
@@ -20,13 +19,14 @@ class Plot:
         self.manifold = manifold
         self.symbols = ['circle', 'square', 'diamond', 'cross', 'x',  'pentagon', 'hexagram', 'star', 'diamond', 'hourglass', 'bowtie']
 
-    def plot(self, color_by : str = None, card_data = tuple(), port=9292, recalculate=True, mols_per_scaffold_group : int = 10,  **kwargs):
+    def plot(self, color_by : str = None, card_data = tuple(), title_data : str = 'SMILES', port=9292, recalculate=True, mols_per_scaffold_group : int = 10,  **kwargs):
         """
         Plot the dataset using the manifold. The plot is interactive and runs as a web app on the specified port.
 
         Args:
             color_by: the data to color the points by, by default the first scaffold found will be used
             card_data: list of data to show on the cards displayed when hovering over a molecule
+            title_data: the data to as the card title
             port: port to run the web app on
             recalculate: whether to recalculate the manifold or use the existing data in the dataset
             mols_per_scaffold_group: how many molecules to include in one scaffold group
@@ -57,9 +57,9 @@ class Plot:
         if not color_by and self.dataset.hasScaffolds:
             scaffold = self.dataset.getScaffoldNames()[0]
             self.dataset.createScaffoldGroups(mols_per_group=mols_per_scaffold_group)
-            color_by = self.dataset.getScaffoldGroups(scaffold).name
+            color_by = self.dataset.getScaffoldGroups(f"{scaffold}", mols_per_scaffold_group).name
             color_discrete_map = {'Other': 'lightgrey'}
-            df = self.dataset.asDataFrame(smiles_col='SMILES')
+            df = self.dataset.asDataFrame(smiles_col='SMILES', mol_col='RDMol')
             fig = px.scatter(df, x=x, y=y,
                 color = color_by, symbol=color_by,
                 symbol_sequence = self.symbols,
@@ -67,14 +67,14 @@ class Plot:
                 **kwargs
             )
         elif color_by:
-            df = self.dataset.asDataFrame(smiles_col='SMILES')
+            df = self.dataset.asDataFrame(smiles_col='SMILES', mol_col='RDMol')
             fig = px.scatter(df, x=x, y=y,
                 color = color_by,symbol=color_by,
                 symbol_sequence = self.symbols,
                 **kwargs
             )
         else:
-            df = self.dataset.asDataFrame(smiles_col='SMILES')
+            df = self.dataset.asDataFrame(smiles_col='SMILES', mol_col='RDMol')
             fig = px.scatter(df, x=x, y=y,
                 **kwargs
             )
@@ -86,7 +86,7 @@ class Plot:
         app_scatter = molplotly.add_molecules(fig=fig,
           df=df,
           smiles_col=['SMILES'] + self.dataset.getScaffoldNames(),
-          title_col= 'SMILES',
+          title_col= title_data,
           color_col = color_by,
           caption_cols = included,
           # width = kwargs['width']

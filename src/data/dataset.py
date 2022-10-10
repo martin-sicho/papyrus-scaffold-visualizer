@@ -139,13 +139,13 @@ class DataSet(ABC):
         pass
 
     @abstractmethod
-    def getScaffoldGroups(self, scaffold_name : str):
+    def getScaffoldGroups(self, scaffold_name : str, mols_per_group : int = 10):
         pass
 
 
 class DataSetTSV(DataSet):
 
-    def __init__(self, path, mol_col = 'SMILES', data : DataFrame = None):
+    def __init__(self, path, mol_col = 'SMILES', data : DataFrame = None, addRDMols : bool = True):
         self.smilesCol = mol_col
         self.molCol = "RDMol"
         self.path = path
@@ -153,13 +153,15 @@ class DataSetTSV(DataSet):
             self._data = data
         else:
             self._data = pd.read_csv(self.path, sep='\t') if os.path.exists(self.path) else None
-        PandasTools.AddMoleculeColumnToFrame(self._data, smilesCol=mol_col, molCol=self.molCol)
 
-    def asDataFrame(self, smiles_col = 'SMILES'):
-        if smiles_col == self.smilesCol:
-            return self._data
-        else:
-            return self._data.rename(columns={self.smilesCol: smiles_col})
+        if addRDMols:
+            PandasTools.AddMoleculeColumnToFrame(self._data, smilesCol=self.smilesCol, molCol=self.molCol)
+
+        if not os.path.exists(self.path):
+            self.save()
+
+    def asDataFrame(self, smiles_col = 'SMILES', mol_col = 'RDMol') -> DataFrame:
+        return self._data.rename(columns={self.smilesCol: smiles_col, self.molCol: mol_col})
 
     def addDescriptors(self, descriptors: List[Descriptor], recalculate = False):
         for descriptor in descriptors:
@@ -183,8 +185,8 @@ class DataSetTSV(DataSet):
     def getDescriptorsNames(self):
         return [col for col in self._data.columns if col.startswith("Descriptor_")]
 
-    def getScaffoldNames(self):
-        return [col for col in self._data.columns if col.startswith("Scaffold_")]
+    def getScaffoldNames(self, include_mols = False):
+        return [col for col in self._data.columns if col.startswith("Scaffold_") and (include_mols or not col.endswith(self.molCol))]
 
     def getDescriptors(self):
         return self._data[self.getDescriptorsNames()]
@@ -223,11 +225,13 @@ class DataSetTSV(DataSet):
         for scaffold in scaffolds.columns:
             counts = pd.value_counts(self._data[scaffold])
             mask = counts.lt(mols_per_group)
-            self._data[f'ScaffoldGroup_{scaffold}'] = np.where(self._data[scaffold].isin(counts[mask].index),'Other', self._data[scaffold])
-        self.save()
+            name = f'ScaffoldGroup_{scaffold}_{mols_per_group}'
+            if name not in self._data.columns:
+                self._data[name] = np.where(self._data[scaffold].isin(counts[mask].index),'Other', self._data[scaffold])
+                self.save()
 
-    def getScaffoldGroups(self, scaffold_name : str):
-        return self._data[f'ScaffoldGroup_{scaffold_name}']
+    def getScaffoldGroups(self, scaffold_name : str, mol_per_group : int = 10):
+        return self._data[self._data.columns[self._data.columns.str.startswith(f"ScaffoldGroup_{scaffold_name}_{mol_per_group}")][0]]
 
     def save(self, path = None):
         self._data.to_csv(path if path else self.path, sep='\t', index=False, header=True)
@@ -239,3 +243,13 @@ class DataSetTSV(DataSet):
     def getNames(self):
         return self._data.columns
 
+class DataSetSDF(DataSetTSV):
+
+    def __init__(self, path, smiles_prop = 'SMILES', use_existing = True):
+        super().__init__(f'{path}.tsv', mol_col=smiles_prop, data=PandasTools.LoadSDF(path, molColName="RDMol"), addRDMols=False) if not use_existing or not os.path.exists(f'{path}.tsv') else super().__init__(f'{path}.tsv', mol_col=smiles_prop, addRDMols=True)
+        self.pathSDF = path
+
+class DataSetSMILES(DataSetTSV):
+
+    def __init__(self, path, smiles : List[str], smiles_col = 'SMILES', use_existing = True, addRDMols = True):
+        super().__init__(path, smiles_col, data=pd.DataFrame(smiles, columns=[smiles_col]), addRDMols=addRDMols) if not use_existing or not os.path.exists(path) else super().__init__(path, mol_col=smiles_col, addRDMols=addRDMols)
