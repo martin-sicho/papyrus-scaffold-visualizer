@@ -5,6 +5,7 @@ Created by: Martin Sicho
 On: 05.10.22, 16:37
 """
 import molplotly
+import numpy as np
 import pandas as pd
 import plotly.express as px
 
@@ -41,12 +42,13 @@ class Plot:
         if manifold_data is not None:
             manifold_cols = manifold_data.columns.tolist()
         if recalculate or manifold_data is None:
-            X = pd.DataFrame(self.manifold.fit_transform(self.dataset))
+            X = self.manifold.fit_transform(self.dataset)
             manifold_cols = []
-            for i, dim in enumerate(X.columns):
+            x = np.transpose(X)
+            for i, dim in enumerate(x):
                 col_name = f"{self.manifold}_{i+1}"
                 manifold_cols.append(col_name)
-                self.dataset.addData(col_name, X[dim])
+                self.dataset.addData(col_name, dim)
 
         kwargs['height'] = 800 if 'height' not in kwargs else kwargs['height']
         kwargs['width'] = 2*kwargs['height'] if 'width' not in kwargs else kwargs['width']
