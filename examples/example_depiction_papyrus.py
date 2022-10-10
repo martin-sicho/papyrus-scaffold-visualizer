@@ -4,11 +4,11 @@ example_depiction
 Created by: Martin Sicho
 On: 07.10.22, 11:16
 """
-from clustering.descriptors import MorganFP
-from clustering.manifold import TSNE
-from clustering.scaffolds import Murcko
-from data.dataset import DataSetTSV
-from depiction.plot import Plot
+from scaffviz.clustering.descriptors import MorganFP
+from scaffviz.clustering.manifold import TSNE
+from scaffviz.clustering.scaffolds import Murcko
+from scaffviz.data.dataset import DataSetTSV
+from scaffviz.depiction.plot import Plot
 
 if __name__ == "__main__":
 

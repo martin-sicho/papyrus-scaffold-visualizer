@@ -4,11 +4,10 @@ example_depiction_smiles
 Created by: Martin Sicho
 On: 10.10.22, 16:05
 """
-from clustering.descriptors import MorganFP
-from clustering.manifold import TSNE
-from clustering.scaffolds import Murcko
-from data.dataset import DataSetSMILES
-from depiction.plot import Plot
+from scaffviz.clustering.descriptors import MorganFP
+from scaffviz.clustering.manifold import TSNE
+from scaffviz.data.dataset import DataSetSMILES
+from scaffviz.depiction.plot import Plot
 
 if __name__ == "__main__":
 

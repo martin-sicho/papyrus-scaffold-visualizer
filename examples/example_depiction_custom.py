@@ -4,11 +4,11 @@ Show depiction from a custom data set.
 Created by: Martin Sicho
 On: 10.10.22, 12:01
 """
-from clustering.descriptors import MorganFP
-from clustering.manifold import TSNE
-from clustering.scaffolds import Murcko
-from data.dataset import DataSetSDF
-from depiction.plot import Plot
+from scaffviz.clustering.descriptors import MorganFP
+from scaffviz.clustering.manifold import TSNE
+from scaffviz.clustering.scaffolds import Murcko
+from scaffviz.data.dataset import DataSetSDF
+from scaffviz.depiction.plot import Plot
 
 if __name__ == "__main__":
 

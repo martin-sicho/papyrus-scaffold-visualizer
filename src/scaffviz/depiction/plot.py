@@ -8,8 +8,8 @@ import molplotly
 import pandas as pd
 import plotly.express as px
 
-from src.clustering.manifold import Manifold
-from src.data.dataset import DataSet
+from scaffviz.clustering.manifold import Manifold
+from scaffviz.data.dataset import DataSet
 
 
 class Plot:

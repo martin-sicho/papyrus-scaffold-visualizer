@@ -10,8 +10,8 @@ from typing import List
 
 from papyrus_scripts.download import download_papyrus
 
-from data.dataset import DataSetTSV
-from data.papyrus.papyrus_filter import papyrus_filter
+from scaffviz.data.dataset import DataSetTSV
+from scaffviz.data.papyrus.papyrus_filter import papyrus_filter
 
 class Papyrus:
     DEFAULT_DIR = os.path.join(Path.home(), '.Papyrus')

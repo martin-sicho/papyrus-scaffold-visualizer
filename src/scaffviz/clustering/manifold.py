@@ -6,7 +6,7 @@ On: 05.10.22, 9:59
 """
 from abc import abstractmethod, ABC
 
-from src.data.dataset import DataSet
+from scaffviz.data.dataset import DataSet
 
 
 class Manifold(ABC):

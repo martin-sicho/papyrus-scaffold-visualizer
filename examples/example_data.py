@@ -4,7 +4,7 @@ example
 Created by: Martin Sicho
 On: 06.10.22, 14:17
 """
-from data.papyrus.papyrus_class import Papyrus
+from scaffviz.data.papyrus.papyrus_class import Papyrus
 
 if __name__ == "__main__":
 

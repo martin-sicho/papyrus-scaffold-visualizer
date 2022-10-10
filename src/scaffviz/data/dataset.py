@@ -13,8 +13,8 @@ import pandas as pd
 from pandas import DataFrame
 from rdkit.Chem import PandasTools
 
-from src.clustering.descriptors import Descriptor
-from src.clustering.scaffolds import Scaffold
+from scaffviz.clustering.descriptors import Descriptor
+from scaffviz.clustering.scaffolds import Scaffold
 
 
 class DataSet(ABC):
@@ -169,7 +169,7 @@ class DataSetTSV(DataSet):
             if not recalculate:
                 continue
             values = self._data.apply(lambda row: descriptor(row[self.smilesCol]), axis=1).to_list()
-            values = pd.DataFrame(values, columns=[f"Descriptor_{descriptor}_{idx}" for idx in range(len(values[0]))])
+            values = pd.DataFrame(values, index=self._data.index, columns=[f"Descriptor_{descriptor}_{idx}" for idx in range(len(values[0]))])
             self._data = pd.concat([self._data, values], axis=1)
             self.save()
 
