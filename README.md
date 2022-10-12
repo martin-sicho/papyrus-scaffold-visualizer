@@ -8,7 +8,7 @@ Extraction and interactive visualization of data extracted from [Papyrus](https:
 You can install the package from PyPI:
 
 ```bash
-   pip install pip install git+ssh://git@gitlab.services.universiteitleiden.nl/cdd/papyrus-scaffold-visualizer.git@main
+   pip install git+ssh://git@gitlab.services.universiteitleiden.nl/cdd/papyrus-scaffold-visualizer.git@main
 ```
 
 You can then use the package to extract data from the Papyrus database and visualize it ([examples/example_depiction_papyrus.py](./examples/example_depiction_papyrus.py)):
