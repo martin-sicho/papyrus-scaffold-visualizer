@@ -20,7 +20,7 @@ class Plot:
         self.manifold = manifold
         self.symbols = ['circle', 'square', 'diamond', 'cross', 'x',  'pentagon', 'hexagram', 'star', 'diamond', 'hourglass', 'bowtie']
 
-    def plot(self, color_by : str = None, card_data = tuple(), title_data : str = 'SMILES', port=9292, recalculate=True, mols_per_scaffold_group : int = 10,  **kwargs):
+    def plot(self, color_by : str = None, card_data = tuple(), title_data : str = 'SMILES', port=9292, recalculate=True, mols_per_scaffold_group : int = 10, color_style : str = 'groups', viewport_height = "100%",  **kwargs):
         """
         Plot the dataset using the manifold. The plot is interactive and runs as a web app on the specified port.
 
@@ -31,6 +31,8 @@ class Plot:
             port: port to run the web app on
             recalculate: whether to recalculate the manifold or use the existing data in the dataset
             mols_per_scaffold_group: how many molecules to include in one scaffold group
+            color_style: how to color the points, can be either 'groups' or 'continuous'. In the 'groups' configuration, the points will be colored assuming `color_by` is a nominal (group) variable, in the 'continuous' configuration, the points will be colored assuming `color_by` is a continuous variable so a color gradient will be used.
+            viewport_height: height of the viewport in the browser (use this ie. to make the iframe containing the plot bigger)
             **kwargs: various arguments to pass to the plotting function (see `plotly.express.scatter`)
 
         Returns:
@@ -70,11 +72,20 @@ class Plot:
             )
         elif color_by:
             df = self.dataset.asDataFrame(smiles_col='SMILES', mol_col='RDMol')
-            fig = px.scatter(df, x=x, y=y,
-                color = color_by,symbol=color_by,
-                symbol_sequence = self.symbols,
-                **kwargs
-            )
+            if color_style == 'groups':
+                fig = px.scatter(df, x=x, y=y,
+                    color = color_by,
+                    symbol=color_by,
+                    symbol_sequence = self.symbols,
+                    **kwargs
+                )
+            elif color_style == 'continuous':
+                fig = px.scatter(df, x=x, y=y,
+                    color = color_by,
+                    **kwargs
+                )
+            else:
+                raise ValueError(f"Unknown color style: {color_style}")
         else:
             df = self.dataset.asDataFrame(smiles_col='SMILES', mol_col='RDMol')
             fig = px.scatter(df, x=x, y=y,
@@ -97,5 +108,5 @@ class Plot:
         app_scatter.run_server(
             mode='inline',
             port=port,
-            height="100%",
+            height=viewport_height,
         )
