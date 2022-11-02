@@ -1,9 +1,3 @@
-"""
-The example code from the readme file.
-
-Created by: Martin Sicho
-On: 10.10.22, 18:06
-"""
 from scaffviz.clustering.descriptors import MorganFP
 from scaffviz.clustering.manifold import TSNE
 from scaffviz.clustering.scaffolds import Murcko
@@ -32,5 +26,3 @@ dataset.addDescriptors([MorganFP(radius=2, nBits=1024)], recalculate=False)
 # make an interactive plot that will use t-SNE to embed the data set in 2D (all available descriptors in the data set will be used)
 plt = Plot(dataset)
 plt.plot(TSNE(perplexity=150), recalculate=True, mols_per_scaffold_group=5, card_data=["all_doc_ids"], title_data='all_doc_ids')
-
-
