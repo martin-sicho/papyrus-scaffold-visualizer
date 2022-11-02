@@ -21,12 +21,12 @@ class Plot:
     def getOpenApps(self):
         return self.open_apps
 
-    def plot(self, manifold : Manifold, x : str = None, y : str = None, color_by : str = None, card_data = tuple(), title_data : str = 'SMILES', port=9292, recalculate=False, mols_per_scaffold_group : int = 10, interactive = True, viewport_height = "100%",  **kwargs):
+    def plot(self, manifold : Manifold = None, x : str = None, y : str = None, color_by : str = None, card_data = tuple(), title_data : str = 'SMILES', port=9292, recalculate=False, mols_per_scaffold_group : int = 10, interactive = True, viewport_height = "100%",  **kwargs):
         """
         Plot the dataset using the manifold or custom `DataSet` fields. The plot is interactive and runs as a web app on the specified port.
 
         Args:
-            manifold: the manifold to use for embedding the data into the plot
+            manifold: the manifold to use for embedding the data into the plot, if not specified the 'x' and 'y' parameters must be set
             x: the name of the variable in the data set to use for the x-axis, if not specified the first dimension of the manifold is used
             y: the name of the variable in the data set to use for the y-axis, if not specified the second dimension of the manifold is used
             color_by: the data to color the points by, by default the first scaffold found in the `DataSet` will be used
@@ -42,7 +42,9 @@ class Plot:
         Returns:
             `None`
         """
-        manifold_cols = self.dataset.addManifoldData(manifold, recalculate=recalculate) if not x or not y else (x, y)
+        manifold_cols = self.dataset.addManifoldData(manifold, recalculate=recalculate) if manifold else (x, y)
+        if not manifold_cols[0] and not manifold_cols[1]:
+            raise ValueError("Neither manifold nor x and y were specified.")
 
         kwargs['height'] = 800 if 'height' not in kwargs else kwargs['height']
         kwargs['width'] = 2*kwargs['height'] if 'width' not in kwargs else kwargs['width']
