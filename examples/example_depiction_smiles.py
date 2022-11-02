@@ -16,5 +16,5 @@ if __name__ == "__main__":
 
     dataset.addDescriptors([MorganFP(radius=2, nBits=1024)], recalculate=True)
 
-    plt = Plot(dataset, TSNE(perplexity=1))
-    plt.plot(recalculate=True, mols_per_scaffold_group=10, card_data=['Name'], title_data='Name', color_by='Name')
+    plt = Plot(dataset)
+    plt.plot(TSNE(perplexity=1), recalculate=True, mols_per_scaffold_group=10, card_data=['Name'], title_data='Name', color_by='Name', port=9292)

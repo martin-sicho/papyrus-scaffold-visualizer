@@ -5,8 +5,6 @@ Created by: Martin Sicho
 On: 05.10.22, 16:37
 """
 import molplotly
-import numpy as np
-import pandas as pd
 import plotly.express as px
 
 from scaffviz.clustering.manifold import Manifold
@@ -15,49 +13,42 @@ from scaffviz.data.dataset import DataSet
 
 class Plot:
 
-    def __init__(self, dataset : DataSet, manifold : Manifold):
+    def __init__(self, dataset : DataSet):
         self.dataset = dataset
-        self.manifold = manifold
         self.symbols = ['circle', 'square', 'diamond', 'cross', 'x',  'pentagon', 'hexagram', 'star', 'diamond', 'hourglass', 'bowtie']
+        self.open_apps = dict()
 
-    def plot(self, color_by : str = None, card_data = tuple(), title_data : str = 'SMILES', port=9292, recalculate=True, mols_per_scaffold_group : int = 10, color_style : str = 'groups', viewport_height = "100%",  **kwargs):
+    def getOpenApps(self):
+        return self.open_apps
+
+    def plot(self, manifold : Manifold, x : str = None, y : str = None, color_by : str = None, card_data = tuple(), title_data : str = 'SMILES', port=9292, recalculate=False, mols_per_scaffold_group : int = 10, interactive = True, viewport_height = "100%",  **kwargs):
         """
-        Plot the dataset using the manifold. The plot is interactive and runs as a web app on the specified port.
+        Plot the dataset using the manifold or custom `DataSet` fields. The plot is interactive and runs as a web app on the specified port.
 
         Args:
-            color_by: the data to color the points by, by default the first scaffold found will be used
-            card_data: list of data to show on the cards displayed when hovering over a molecule
-            title_data: the data to as the card title
-            port: port to run the web app on
+            manifold: the manifold to use for embedding the data into the plot
+            x: the name of the variable in the data set to use for the x-axis, if not specified the first dimension of the manifold is used
+            y: the name of the variable in the data set to use for the y-axis, if not specified the second dimension of the manifold is used
+            color_by: the data to color the points by, by default the first scaffold found in the `DataSet` will be used
+            card_data: `list` of data names from the `DataSet` to show on the cards displayed when hovering over a molecule in the interactive plot, ignored if `interactive` is `False`
+            title_data: the data to get from the `DataSet` as the card title, ignored if `interactive` is `False`
+            port: port to run the interactive web app on, ignored if `interactive` is `False`
             recalculate: whether to recalculate the manifold or use the existing data in the dataset
-            mols_per_scaffold_group: how many molecules to include in one scaffold group
-            color_style: how to color the points, can be either 'groups' or 'continuous'. In the 'groups' configuration, the points will be colored assuming `color_by` is a nominal (group) variable, in the 'continuous' configuration, the points will be colored assuming `color_by` is a continuous variable so a color gradient will be used.
-            viewport_height: height of the viewport in the browser (use this ie. to make the iframe containing the plot bigger)
+            mols_per_scaffold_group: how many molecules to include in one scaffold group, only applicable if `color_by` is not specified, the scaffolds with the number of molecules lower than this value will be shown in grey in the plot
+            interactive: whether to run the plot as an interactive web app or just return the figure object
+            viewport_height: height of the viewport in the browser (use this ie. to make the iframe containing the plot bigger), applies only to interactive plots
             **kwargs: various arguments to pass to the plotting function (see `plotly.express.scatter`)
 
         Returns:
             `None`
         """
-
-        manifold_data = self.dataset.getSubset(str(self.manifold))
-        manifold_cols = []
-        if manifold_data is not None:
-            manifold_cols = manifold_data.columns.tolist()
-        if recalculate or manifold_data is None:
-            X = self.manifold.fit_transform(self.dataset)
-            manifold_cols = []
-            x = np.transpose(X)
-            for i, dim in enumerate(x):
-                col_name = f"{self.manifold}_{i+1}"
-                manifold_cols.append(col_name)
-                self.dataset.addData(col_name, dim)
+        manifold_cols = self.dataset.addManifoldData(manifold, recalculate=recalculate) if not x or not y else (x, y)
 
         kwargs['height'] = 800 if 'height' not in kwargs else kwargs['height']
         kwargs['width'] = 2*kwargs['height'] if 'width' not in kwargs else kwargs['width']
         kwargs['render_mode'] = 'svg' if 'render_mode' not in kwargs else kwargs['render_mode']
-        x = f"{self.manifold}_1"
-        y = f"{self.manifold}_2"
-        scaffold = None
+        x = manifold_cols[0] if not x else x
+        y = manifold_cols[1] if not y else y
         if not color_by and self.dataset.hasScaffolds:
             scaffold = self.dataset.getScaffoldNames()[0]
             self.dataset.createScaffoldGroups(mols_per_group=mols_per_scaffold_group)
@@ -72,26 +63,19 @@ class Plot:
             )
         elif color_by:
             df = self.dataset.asDataFrame(smiles_col='SMILES', mol_col='RDMol')
-            if color_style == 'groups':
-                fig = px.scatter(df, x=x, y=y,
-                    color = color_by,
-                    symbol=color_by,
-                    symbol_sequence = self.symbols,
-                    **kwargs
-                )
-            elif color_style == 'continuous':
-                fig = px.scatter(df, x=x, y=y,
-                    color = color_by,
-                    **kwargs
-                )
-            else:
-                raise ValueError(f"Unknown color style: {color_style}")
+            fig = px.scatter(df, x=x, y=y,
+                color=color_by,
+                **kwargs
+            )
         else:
             df = self.dataset.asDataFrame(smiles_col='SMILES', mol_col='RDMol')
             fig = px.scatter(df, x=x, y=y,
                 **kwargs
             )
         fig.update_layout(plot_bgcolor='White')
+
+        if not interactive:
+            return fig
 
         # interactive plot:
         excluded = df.columns[df.columns.str.contains('RDMol')].tolist() + list(self.dataset.getDescriptorsNames()) + manifold_cols + df.columns[~df.columns.isin(card_data)].tolist()
@@ -105,6 +89,7 @@ class Plot:
           # width = kwargs['width']
         )
 
+        self.open_apps[port] = app_scatter
         app_scatter.run_server(
             mode='inline',
             port=port,

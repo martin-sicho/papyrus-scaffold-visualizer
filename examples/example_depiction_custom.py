@@ -17,5 +17,5 @@ if __name__ == "__main__":
     dataset.addScaffolds([Murcko()])
     dataset.addDescriptors([MorganFP(radius=2, nBits=1024)], recalculate=False)
 
-    plt = Plot(dataset, TSNE())
-    plt.plot(recalculate=False, mols_per_scaffold_group=10, card_data=['INCHI_KEY'], title_data='INCHI_KEY')
+    plt = Plot(dataset)
+    plt.plot(TSNE(), recalculate=False, mols_per_scaffold_group=10, card_data=['INCHI_KEY'], title_data='INCHI_KEY', port=9292)

@@ -5,5 +5,5 @@ Created by: Martin Sicho
 On: 10.10.22, 17:14
 """
 
-VERSION = '0.2.0'
+VERSION = '0.2.1.dev0'
 __version__ = VERSION

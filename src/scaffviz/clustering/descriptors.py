@@ -18,15 +18,13 @@ class Descriptor(ABC):
     @abstractmethod
     def __call__(self, mol):
         """
-        Calculate the descriptor for a molecule.
+        Calculate descriptors for a molecule.
 
         Args:
             mol: smiles or rdkit molecule
-            *args: optional arguments
-            **kwargs: optional keyword arguments
 
         Returns:
-            a `list` of descriptor values
+            a numpy array of descriptor values
         """
         pass
 
@@ -52,12 +50,16 @@ class MorganFP(Descriptor):
         self._morgan = AllChem.GetMorganFingerprintAsBitVect
         self._args = args
         self._kwargs = kwargs
+        self._ln = None
 
     def __call__(self, mol):
         mol = self._convertMol(mol) if isinstance(mol, str) else mol
+        ret = np.zeros(self._ln)
+        if not mol:
+            return ret
         fp = self._morgan(mol, *self._args, **self._kwargs)
-        ln = len(fp)
-        ret = np.zeros(ln)
+        if not self._ln:
+            self._ln = len(fp)
         self._convertFP(fp, ret)
         return ret
 
