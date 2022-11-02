@@ -10,7 +10,7 @@ from scaffviz.data.dataset import DataSetTSV
 from scaffviz.depiction.plot import Plot
 
 if __name__ == '__main__':
-    dataset = DataSetTSV("./data/hCCR2_LIGANDS_nostereo.tsv")
+    dataset = DataSetTSV("./data/P51681_LIGANDS_nostereo.tsv")
     dataset.addDescriptors([MorganFP(radius=2, nBits=1024)], recalculate=False)
 
     plt = Plot(dataset)
