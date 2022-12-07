@@ -25,12 +25,14 @@ name = "P51681_LIGANDS_nostereo" # replace with your own name for the output dat
 quality = "low" # choose minimum quality from {"high", "medium", "low"}
 
 # fetches the latest version of Papyrus if not already available and filters out the relevant data
+version = '05.6'
 papyrus = Papyrus(data_dir="./data", stereo=False)
 dataset = papyrus.getData(
     acc_keys,
     quality,
     name,
     use_existing=True # use existing data set if it was already compiled before
+    version=version
 )
 
 # add Murcko scaffolds to the data set -> will be used to group compounds inside the plot
