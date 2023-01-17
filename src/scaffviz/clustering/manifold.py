@@ -1,5 +1,5 @@
 """
-manifold
+This module contains classes for performing manifold learning on molecular data.
 
 Created by: Martin Sicho
 On: 05.10.22, 9:59
@@ -12,7 +12,7 @@ class Manifold(ABC):
     @abstractmethod
     def fit(self, X):
         """
-        Fit the manifold to the data.
+        Fit the manifold to a matrix of data.
 
         Args:
             X: a matrix of data to fit the manifold to, can be a pandas `DataFrame` or a numpy `ndarray`
@@ -26,7 +26,7 @@ class Manifold(ABC):
     @abstractmethod
     def transform(self, X):
         """
-        Transform the data using the fitted manifold.
+        Transform the data matrix using the fitted manifold.
 
         Args:
             X: a matrix of data to transform, can be a pandas `DataFrame` or a numpy `ndarray`
@@ -39,7 +39,7 @@ class Manifold(ABC):
 
     def fit_transform(self, X):
         """
-        Fit the manifold to the data and transform it in one step.
+        Fit the manifold to the data matrix and transform it in one step.
 
         Args:
             X: a matrix of data to fit the manifold to and transform, can be a pandas `DataFrame` or a numpy `ndarray`
@@ -54,7 +54,7 @@ class Manifold(ABC):
     @abstractmethod
     def __str__(self):
         """
-        Get a string representation of the defined manifold. Used to save the manifold in the `Dataset` table, for example.
+        Get a string representation of the defined manifold. Used to clearly distinguish the manifold in the `MoleculeTable`, for example.
 
         Returns:
             a string representation of the manifold
