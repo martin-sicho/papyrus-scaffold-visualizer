@@ -4,18 +4,21 @@ Show depiction from a custom data set.
 Created by: Martin Sicho
 On: 10.10.22, 12:01
 """
-from scaffviz.clustering.descriptors import MorganFP
+from qsprpred.data.data import MoleculeTable
+from qsprpred.data.utils.descriptorcalculator import DescriptorsCalculator
+from qsprpred.data.utils.descriptorsets import MorganFP
 from scaffviz.clustering.manifold import TSNE
-from scaffviz.clustering.scaffolds import Murcko
-from scaffviz.data.dataset import DataSetSDF
+from qsprpred.data.utils.scaffolds import Murcko
 from scaffviz.depiction.plot import Plot
 
 if __name__ == "__main__":
 
-    dataset = DataSetSDF("./data/A2A_chembl_export.sdf", smiles_prop="CANONICAL_SMILES")
+    dataset = MoleculeTable.fromSDF("A2A", "./data/A2A_chembl_export.sdf", smiles_prop="CANONICAL_SMILES", store_dir="./data")
 
     dataset.addScaffolds([Murcko()])
-    dataset.addDescriptors([MorganFP(radius=2, nBits=1024)], recalculate=False)
+    desc_calculator = DescriptorsCalculator(descsets=[MorganFP(radius=2, nBits=1024)])
+    dataset.addDescriptors(desc_calculator, recalculate=False)
 
-    plt = Plot(dataset)
-    plt.plot(TSNE(), recalculate=False, mols_per_scaffold_group=10, card_data=['INCHI_KEY'], title_data='INCHI_KEY', port=9292)
+    plt = Plot(TSNE())
+    plt.plot(dataset, recalculate=False, mols_per_scaffold_group=10, card_data=['INCHI_KEY', 'CANONICAL_SMILES'], title_data='CANONICAL_SMILES', port=9292)
+
