@@ -7,6 +7,7 @@ On: 10.10.22, 16:05
 from qsprpred.data.utils.descriptorcalculator import DescriptorsCalculator
 from qsprpred.data.utils.descriptorsets import MorganFP
 from qsprpred.data.data import MoleculeTable
+from qsprpred.data.utils.scaffolds import BemisMurcko
 
 from scaffviz.clustering.manifold import TSNE
 from scaffviz.depiction.plot import Plot
@@ -18,7 +19,7 @@ if __name__ == "__main__":
 
     desc_calculator = DescriptorsCalculator(descsets=[MorganFP(radius=2, nBits=2048)])
     dataset.addDescriptors(desc_calculator, recalculate=True)
+    dataset.addScaffolds([BemisMurcko(convert_hetero=False)])
 
     plt = Plot(TSNE(perplexity=1))
     plt.plot(dataset, recalculate=True, mols_per_scaffold_group=1, card_data=['Name'], title_data='Name', port=9292)
-    # plt.plot(dataset, recalculate=True, mols_per_scaffold_group=10, card_data=['Name'], title_data='Name', color_by='Name', port=9292)
