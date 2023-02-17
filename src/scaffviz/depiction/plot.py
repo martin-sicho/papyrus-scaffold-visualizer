@@ -93,7 +93,7 @@ class Plot:
         # interactive plot:
         excluded = df.columns[df.columns.str.contains('RDMol')].tolist() + list(table.getDescriptorNames()) + manifold_cols + df.columns[~df.columns.isin(card_data)].tolist()
         included = [title_data] + [col for col in df.columns if col not in excluded]
-        smiles_col = [title_data] + table.getScaffoldNames() if table.hasScaffolds else [title_data]
+        smiles_col = [table.smilescol] + table.getScaffoldNames() if table.hasScaffolds else [table.smilescol]
         app_scatter = molplotly.add_molecules(fig=fig,
           df=df,
           smiles_col=smiles_col,
