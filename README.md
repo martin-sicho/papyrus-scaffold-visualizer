@@ -14,7 +14,7 @@ You can install the package from PyPI:
 You can then use the package to extract data from the Papyrus database and visualize it ([examples/example_depiction_papyrus.py](./examples/example_depiction_papyrus.py)):
 
 ```python
-from qsprpred.data.utils.descriptorsets import MorganFP
+from qsprpred.data.utils.descriptorsets import FingerprintSet
 from scaffviz.clustering.manifold import TSNE
 from qsprpred.data.utils.scaffolds import BemisMurcko
 from qsprpred.data.sources.papyrus import Papyrus
@@ -37,7 +37,10 @@ dataset = papyrus.getData(
 dataset.addScaffolds([BemisMurcko(convert_hetero=False, force_single_bonds=False)])
 
 # add Morgan fingerprints to the data set -> these will be used to calculate the t-SNE embedding in 2D
-dataset.addDescriptors([MorganFP(radius=2, nBits=1024)], recalculate=False)
+dataset.addDescriptors([
+    FingerprintSet(fingerprint_type="MorganFP", radius=3, nBits=2048)], 
+    recalculate=False
+)
 
 # make an interactive plot that will use t-SNE to embed the data set in 2D (all available descriptors in the data set will be used)
 plt = Plot(TSNE(perplexity=150))

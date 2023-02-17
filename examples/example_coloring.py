@@ -5,7 +5,7 @@ Created by: Martin Sicho
 On: 02.11.22, 14:09
 """
 from qsprpred.data.utils.descriptorcalculator import DescriptorsCalculator
-from qsprpred.data.utils.descriptorsets import MorganFP
+from qsprpred.data.utils.descriptorsets import FingerprintSet
 from scaffviz.clustering.manifold import TSNE
 from qsprpred.data.data import MoleculeTable
 from scaffviz.depiction.plot import Plot
@@ -13,7 +13,7 @@ from scaffviz.depiction.plot import Plot
 if __name__ == '__main__':
     # load data
     dataset = MoleculeTable.fromTableFile("P51681", "./data/P51681_LIGANDS_nostereo.tsv", sep="\t", store_dir="./data")
-    desc_calculator = DescriptorsCalculator(descsets=[MorganFP(radius=2, nBits=1024)])
+    desc_calculator = DescriptorsCalculator(descsets=[FingerprintSet(fingerprint_type="MorganFP", radius=3, nBits=2048)])
     dataset.addDescriptors(desc_calculator, recalculate=False)
 
     plt = Plot(TSNE())
