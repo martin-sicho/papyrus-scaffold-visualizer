@@ -7,3 +7,7 @@ Current version: 0.2.0
 ## New Features
 
 -   Added more options to customize color palette when plotting.
+
+## Changes
+
+- The package now requires [QSPRPred](https://github.com/CDDLeiden/QSPRPred) to run.
