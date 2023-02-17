@@ -8,25 +8,35 @@ import molplotly
 import plotly.express as px
 
 from scaffviz.clustering.manifold import Manifold
-from scaffviz.data.dataset import DataSet
+from qsprpred.data.data import MoleculeTable
+from scaffviz.data.manifold_table import ManifoldTable
 
 
 class Plot:
 
-    def __init__(self, dataset : DataSet):
-        self.dataset = dataset
+    def __init__(self, manifold : Manifold, save_manifold : bool = True):
+        """
+        Initialize a plotting object for the given `Manifold`.
+
+        Args:
+            manifold: the `Manifold` class to use to project molecules to 2D
+            save_manifold: if `True` the calculated 2D coordinates are saved to the `MoleculeTable` object
+        """
+
         self.symbols = ['circle', 'square', 'diamond', 'cross', 'x',  'pentagon', 'hexagram', 'star', 'diamond', 'hourglass', 'bowtie']
         self.open_apps = dict()
+        self.save_manifold = save_manifold
+        self.manifold = manifold
 
     def getOpenApps(self):
         return self.open_apps
 
-    def plot(self, manifold : Manifold = None, x : str = None, y : str = None, color_by : str = None, card_data = tuple(), title_data : str = 'SMILES', port=9292, recalculate=False, mols_per_scaffold_group : int = 10, interactive = True, viewport_height = "100%",  **kwargs):
+    def plot(self, table : MoleculeTable, x : str = None, y : str = None, color_by : str = None, card_data = tuple(), title_data : str = 'SMILES', port=9292, recalculate=False, mols_per_scaffold_group : int = 10, interactive = True, viewport_height = "100%",  **kwargs):
         """
         Plot the dataset using the manifold or custom `DataSet` fields. The plot is interactive and runs as a web app on the specified port.
 
         Args:
-            manifold: the manifold to use for embedding the data into the plot, if not specified the 'x' and 'y' parameters must be set
+            table: the `MoleculeTable` object to plot molecules and data from
             x: the name of the variable in the data set to use for the x-axis, if not specified the first dimension of the manifold is used
             y: the name of the variable in the data set to use for the y-axis, if not specified the second dimension of the manifold is used
             color_by: the data to color the points by, by default the first scaffold found in the `DataSet` will be used
@@ -42,7 +52,8 @@ class Plot:
         Returns:
             `None`
         """
-        manifold_cols = self.dataset.addManifoldData(manifold, recalculate=recalculate) if manifold else (x, y)
+        table = ManifoldTable.fromMolTable(table)
+        manifold_cols = table.addManifoldData(self.manifold, recalculate=recalculate) if self.manifold else (x, y)
         if not manifold_cols[0] and not manifold_cols[1]:
             raise ValueError("Neither manifold nor x and y were specified.")
 
@@ -51,12 +62,12 @@ class Plot:
         kwargs['render_mode'] = 'svg' if 'render_mode' not in kwargs else kwargs['render_mode']
         x = manifold_cols[0] if not x else x
         y = manifold_cols[1] if not y else y
-        if not color_by and self.dataset.hasScaffolds:
-            scaffold = self.dataset.getScaffoldNames()[0]
-            self.dataset.createScaffoldGroups(mols_per_group=mols_per_scaffold_group)
-            color_by = self.dataset.getScaffoldGroups(f"{scaffold}", mols_per_scaffold_group).name
+        if not color_by and table.hasScaffolds:
+            scaffold = table.getScaffoldNames()[0] # FIXME: we should expose this and give a choice of what scaffold to use
+            table.createScaffoldGroups(mols_per_group=mols_per_scaffold_group)
+            color_by = table.getScaffoldGroups(f"{scaffold}", mols_per_scaffold_group).name
             color_discrete_map = {'Other': 'lightgrey'}
-            df = self.dataset.asDataFrame(smiles_col='SMILES', mol_col='RDMol')
+            df = table.getDF()
             fig = px.scatter(df, x=x, y=y,
                 color = color_by, symbol=color_by,
                 symbol_sequence = self.symbols,
@@ -64,13 +75,13 @@ class Plot:
                 **kwargs
             )
         elif color_by:
-            df = self.dataset.asDataFrame(smiles_col='SMILES', mol_col='RDMol')
+            df = table.getDF()
             fig = px.scatter(df, x=x, y=y,
                 color=color_by,
                 **kwargs
             )
         else:
-            df = self.dataset.asDataFrame(smiles_col='SMILES', mol_col='RDMol')
+            df = table.getDF()
             fig = px.scatter(df, x=x, y=y,
                 **kwargs
             )
@@ -80,11 +91,12 @@ class Plot:
             return fig
 
         # interactive plot:
-        excluded = df.columns[df.columns.str.contains('RDMol')].tolist() + list(self.dataset.getDescriptorsNames()) + manifold_cols + df.columns[~df.columns.isin(card_data)].tolist()
-        included = ['SMILES'] + [col for col in df.columns if col not in excluded]
+        excluded = df.columns[df.columns.str.contains('RDMol')].tolist() + list(table.getDescriptorNames()) + manifold_cols + df.columns[~df.columns.isin(card_data)].tolist()
+        included = [title_data] + [col for col in df.columns if col not in excluded]
+        smiles_col = [table.smilescol] + table.getScaffoldNames() if table.hasScaffolds else [table.smilescol]
         app_scatter = molplotly.add_molecules(fig=fig,
           df=df,
-          smiles_col=['SMILES'] + self.dataset.getScaffoldNames(),
+          smiles_col=smiles_col,
           title_col= title_data,
           color_col = color_by,
           caption_cols = included,

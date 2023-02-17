@@ -14,10 +14,10 @@ You can install the package from PyPI:
 You can then use the package to extract data from the Papyrus database and visualize it ([examples/example_depiction_papyrus.py](./examples/example_depiction_papyrus.py)):
 
 ```python
-from scaffviz.clustering.descriptors import MorganFP
+from qsprpred.data.utils.descriptorsets import FingerprintSet
 from scaffviz.clustering.manifold import TSNE
-from scaffviz.clustering.scaffolds import Murcko
-from scaffviz.data.papyrus import Papyrus
+from qsprpred.data.utils.scaffolds import BemisMurcko
+from qsprpred.data.sources.papyrus import Papyrus
 from scaffviz.depiction.plot import Plot
 
 acc_keys = ["P51681"] # replace with your own accession key
@@ -25,25 +25,26 @@ name = "P51681_LIGANDS_nostereo" # replace with your own name for the output dat
 quality = "low" # choose minimum quality from {"high", "medium", "low"}
 
 # fetches the latest version of Papyrus if not already available and filters out the relevant data
-version = '05.6'
 papyrus = Papyrus(data_dir="./data", stereo=False)
 dataset = papyrus.getData(
     acc_keys,
     quality,
-    name,
-    use_existing=True, # use existing data set if it was already compiled before
-    version=version
+    name=name,
+    use_existing=True # use existing data set if it was already compiled before
 )
 
 # add Murcko scaffolds to the data set -> will be used to group compounds inside the plot
-dataset.addScaffolds([Murcko()])
+dataset.addScaffolds([BemisMurcko(convert_hetero=False, force_single_bonds=False)])
 
 # add Morgan fingerprints to the data set -> these will be used to calculate the t-SNE embedding in 2D
-dataset.addDescriptors([MorganFP(radius=2, nBits=1024)], recalculate=False)
+dataset.addDescriptors([
+    FingerprintSet(fingerprint_type="MorganFP", radius=3, nBits=2048)], 
+    recalculate=False
+)
 
 # make an interactive plot that will use t-SNE to embed the data set in 2D (all available descriptors in the data set will be used)
-plt = Plot(dataset)
-plt.plot(TSNE(perplexity=150), recalculate=True, mols_per_scaffold_group=5, card_data=["all_doc_ids"], title_data='all_doc_ids')
+plt = Plot(TSNE(perplexity=150))
+plt.plot(dataset, recalculate=True, mols_per_scaffold_group=5, card_data=["all_doc_ids"], title_data='all_doc_ids')
 ```
 
 You can find more example scripts under [examples](./examples).
