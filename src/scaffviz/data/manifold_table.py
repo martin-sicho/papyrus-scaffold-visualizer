@@ -13,7 +13,10 @@ class ManifoldTable(MoleculeTable):
 
     @staticmethod
     def fromMolTable(mol_table : MoleculeTable):
-        return ManifoldTable(mol_table.name, mol_table.getDF(), smilescol=mol_table.smilescol, store_dir=mol_table.storeDir)
+        mt = ManifoldTable(mol_table.name, mol_table.getDF(), smilescol=mol_table.smilescol, store_dir=mol_table.storeDir)
+        mt.descriptors = mol_table.descriptors
+        mt.descriptorCalculators = mol_table.descriptorCalculators
+        return mt
 
     def getManifoldData(self, manifold: Manifold):
         return self.getSubset(str(manifold))

@@ -4,7 +4,7 @@ example_depiction_smiles
 Created by: Martin Sicho
 On: 10.10.22, 16:05
 """
-from qsprpred.data.utils.descriptorcalculator import DescriptorsCalculator
+from qsprpred.data.utils.descriptorcalculator import MoleculeDescriptorsCalculator
 from qsprpred.data.utils.descriptorsets import FingerprintSet
 from qsprpred.data.data import MoleculeTable
 from qsprpred.data.utils.scaffolds import BemisMurcko
@@ -17,7 +17,7 @@ if __name__ == "__main__":
     dataset = MoleculeTable.fromSMILES('smiles', ['CN1C2CCC1C(C(C2)OC(=O)C3=CC=CC=C3)C(=O)OC', 'O=C(OCCN(CC)CC)c1ccc(N)cc1', 'CCO'], store_dir='data')
     dataset.addProperty("Name", ["cocaine", "procaine", "ethanol"])
 
-    desc_calculator = DescriptorsCalculator(descsets=[FingerprintSet(fingerprint_type="MorganFP", radius=3, nBits=2048)])
+    desc_calculator = MoleculeDescriptorsCalculator(descsets=[FingerprintSet(fingerprint_type="MorganFP", radius=3, nBits=2048)])
     dataset.addDescriptors(desc_calculator, recalculate=True)
     dataset.addScaffolds([BemisMurcko(convert_hetero=False)])
 

@@ -1,4 +1,4 @@
-from qsprpred.data.utils.descriptorcalculator import DescriptorsCalculator
+from qsprpred.data.utils.descriptorcalculator import MoleculeDescriptorsCalculator
 from qsprpred.data.utils.descriptorsets import FingerprintSet
 from scaffviz.clustering.manifold import TSNE
 from qsprpred.data.utils.scaffolds import BemisMurcko
@@ -22,7 +22,7 @@ dataset = papyrus.getData(
 dataset.addScaffolds([BemisMurcko(convert_hetero=False, force_single_bonds=False)])
 
 # add Morgan fingerprints to the data set -> these will be used to calculate the t-SNE embedding in 2D
-desc_calculator = DescriptorsCalculator(descsets=[FingerprintSet(fingerprint_type="MorganFP", radius=3, nBits=2048)])
+desc_calculator = MoleculeDescriptorsCalculator(descsets=[FingerprintSet(fingerprint_type="MorganFP", radius=3, nBits=2048)])
 dataset.addDescriptors(desc_calculator, recalculate=False)
 
 # make an interactive plot that will use t-SNE to embed the data set in 2D (all available descriptors in the data set will be used)
