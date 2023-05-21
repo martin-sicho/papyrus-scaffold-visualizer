@@ -6,6 +6,8 @@ On: 05.10.22, 9:59
 """
 from abc import abstractmethod, ABC
 
+from sklearn.preprocessing import StandardScaler
+
 
 class Manifold(ABC):
 
@@ -77,6 +79,7 @@ class TSNE(Manifold):
         return self._skTSNE.fit_transform(X)
 
     def fit_transform(self, X):
+        X = StandardScaler().fit_transform(X)
         return self._skTSNE.fit_transform(X)
 
     def __str__(self):
