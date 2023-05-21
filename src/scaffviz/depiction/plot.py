@@ -5,11 +5,16 @@ Created by: Martin Sicho
 On: 05.10.22, 16:37
 """
 import molplotly
+import pandas as pd
 import plotly.express as px
 
 from scaffviz.clustering.manifold import Manifold
-from qsprpred.data.data import MoleculeTable
+from qsprpred.data.data import MoleculeTable, QSPRDataset
 from scaffviz.data.manifold_table import ManifoldTable
+from qsprpred.models.models import QSPRModel
+from qsprpred.plotting.interfaces import ModelPlot
+from typing import List
+from qsprpred.models.tasks import ModelTasks
 
 
 class Plot:
@@ -109,3 +114,43 @@ class Plot:
             port=port,
             height=viewport_height,
         )
+
+class ModelPerformancePlot(ModelPlot):
+
+    def __init__(self, manifold : Manifold, models: List[QSPRModel], datasets : List[QSPRDataset] = None):
+        super().__init__(models)
+        self.manifold = manifold
+
+        # check if we have data for all models
+        self.datasets = datasets
+        if not self.datasets:
+            self.datasets = [model.data for model in models]
+        
+        if len(self.datasets) != len(self.models):
+            raise ValueError("Number of models and datasets does not match.")
+
+        if not all(self.datasets):
+            raise ValueError("Some models have no associated data. Specify the data used to train each model with the 'datasets' argument or provide a model with a 'QSPRDataset' attached.")
+
+    def getSupportedTasks(self):
+        """Return a list of tasks supported by this plotter."""
+        return [
+            ModelTasks.SINGLECLASS, 
+            ModelTasks.MULTICLASS, 
+            ModelTasks.REGRESSION,
+        ]
+
+    def make(self, show=True, save=False):
+        """Make the plot."""
+
+        for idx, cv_path, ind_path in zip(self.cvPaths, self.indPaths):
+            ds = self.datasets[idx]
+            df_cv = pd.read_table(cv_path)
+            df_cv["TestSet"] = df_cv["Fold"]
+            df_ind = pd.read_table(ind_path)
+            df_ind["TestSet"] = "Independent"
+            df_perf = pd.concat([df_cv, df_ind])
+            df_perf["Model"] = self.models[idx].name
+            df_perf = df_perf.merge(ds.getDF()[[ds.smilescol]], left_index=True, right_index=True)
+            df_perf.sort_values(by=["TestSet"], inplace=True)
+            mt = ManifoldTable(name=f"Perf_{self.models[idx].name}", smilescol=ds.smilescol)
