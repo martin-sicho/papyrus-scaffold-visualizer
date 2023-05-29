@@ -14,7 +14,7 @@ class ManifoldTable(MoleculeTable):
     @staticmethod
     def fromMolTable(mol_table : MoleculeTable, name=None):
         name = name if name is not None else mol_table.name
-        mt = ManifoldTable(name, mol_table.getDF(), smilescol=mol_table.smilescol, store_dir=mol_table.storeDir)
+        mt = ManifoldTable(name, mol_table.getDF(), smilescol=mol_table.smilescol, store_dir=mol_table.storeDir, index_cols=mol_table.indexCols)
         mt.descriptors = mol_table.descriptors
         mt.descriptorCalculators = mol_table.descriptorCalculators
         return mt
