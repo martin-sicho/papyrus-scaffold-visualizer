@@ -122,12 +122,12 @@ class Plot:
 
 class ModelPerformancePlot(ModelPlot):
 
-    def __init__(self, manifold : Manifold, models: List[QSPRModel], ports, datasets : List[QSPRDataset] = None, card_props = None, plot_type = Literal["errors", "splits", "predictions", "labels"], async_execution=False):
+    def __init__(self, manifold : Manifold, models: List[QSPRModel], ports, datasets : List[QSPRDataset] = None, card_props = None, plot_type = Literal["errors", "splits", "predictions", "labels"], async_execution=True):
         super().__init__(models)
         self.manifold = manifold
         self.plotType = plot_type
         self.ports = ports
-        self.running = dict()
+        self.runningApps = dict()
         self.asyncExecution = async_execution
         self.cardProps = card_props if card_props else []
 
@@ -136,6 +136,10 @@ class ModelPerformancePlot(ModelPlot):
         if not self.datasets:
             for model in self.models:
                 self.datasets[model] = model.data
+
+        # check if ports unique
+        if len(self.ports) != len(set(self.ports)):
+            raise ValueError("Ports must be unique.")
         
         if len(self.datasets) != len(self.models):
             raise ValueError("Number of models and datasets does not match.")
@@ -210,37 +214,41 @@ class ModelPerformancePlot(ModelPlot):
     def make(self, show=True, save=False):
         """Make the plot."""
 
-        lock = threading.Lock()
         for model_idx, model in enumerate(self.models):
+            port = self.ports[model_idx]
             ds = self.datasets[model]
-            if self.asyncExecution:
-                ds = copy.deepcopy(ds) # FIXME: this is an ugly hack to avoid threading issues
             df_cv, col_label, col_pred, col_err, cols_probas = self.getCVData(model, model.targetProperties[0])
             df_ind, col_label, col_pred, col_err, cols_probas = self.getIndData(model, model.targetProperties[0])
             df_all = pd.concat([df_cv, df_ind])
 
-            # data set is the same for all threads
-            ds.df = ds.getDF().merge(df_all, left_index=True, right_index=True)
+            # create a molecule table with the required data
+            manifold_cols = ds.getSubset(f"{self.manifold}_")
+            if manifold_cols is None:
+                manifold_cols = []
+            else:
+                manifold_cols = manifold_cols.columns.tolist()
+            ds_subset = copy.deepcopy(ds.getDF()[[ds.smilescol] + self.cardProps + ds.indexCols + manifold_cols]) # create a deep copy of the necessary subset to prevent threading issues
+            df_all = ds_subset.merge(df_all, left_index=True, right_index=True)
+            mt = MoleculeTable(f"{model.name}_perfplot_{self.plotType}_p{port}", df=df_all, smilescol=ds.smilescol, index_cols=ds.indexCols)
+            features = ds.getFeatures(concat=True)
+            calc = CustomDescriptorsCalculator([DataFrameDescriptorSet(features)])
+            mt.addCustomDescriptors(calc)
 
-            # df_all = ds.getDF()[[ds.smilescol] + self.cardProps + ds.indexCols].merge(df_all, left_index=True, right_index=True)
-            # mt = MoleculeTable(f"{ds.name}_errplot_{hash(self)}", df=df_all, smilescol=ds.smilescol, index_cols=ds.indexCols)
-            # mt.descriptors = ds.descriptors # try to get features here and check if still connected to the dataset with index cols, make sure index columns are transfered to descriptor table
-            # mt.descriptorCalculators = ds.descriptorCalculators
+            # create a server for the current plot
             plt_map = {
                 "errors" : col_err,
                 "splits" : "TestSet",
                 "predictions" : col_pred,
                 "labels" : col_label,
             }
-            def plot_server(port, running):
+            def plot_server(port, runningApps):
                 def run():
                     plot = Plot(manifold=self.manifold)
-                    with lock:
-                        running[port]["plot"] = plot
+                    runningApps[port]["plot"] = plot
                     plot.plot(
-                        ds,
-                        title_data=ds.indexCols[0],
-                        card_data=ds.indexCols + [col_label, col_pred, col_err] + cols_probas + self.cardProps,
+                        mt,
+                        title_data=mt.indexCols[0],
+                        card_data=mt.indexCols + [col_label, col_pred, col_err] + cols_probas + self.cardProps,
                         color_by=plt_map[self.plotType],
                         port=port,
                         interactive=True,
@@ -249,17 +257,17 @@ class ModelPerformancePlot(ModelPlot):
 
                 return run
 
-            port = self.ports[model_idx]
-            server = plot_server(port, self.running)
-            self.running[port] = dict()
-            self.running[port]["model"] = model
-            self.running[port]['server'] = server
-            self.running[port]['plot_type'] = self.plotType
+            server = plot_server(port, self.runningApps)
+            self.runningApps[port] = dict()
+            self.runningApps[port]["model"] = model
+            self.runningApps[port]['server'] = server
+            self.runningApps[port]['plot_type'] = self.plotType
+            self.runningApps[port]['table'] = mt
             if self.asyncExecution:
-                thr = threading.Thread(target=plot_server(port, self.running))
+                thr = threading.Thread(target=plot_server(port, self.runningApps))
                 thr.start()
-                self.running[port]['thread'] = thr
+                self.runningApps[port]['thread'] = thr
             else:
                 server()
 
-        return self.running
+        return self.runningApps

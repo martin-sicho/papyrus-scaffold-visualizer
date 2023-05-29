@@ -15,6 +15,28 @@ from qsprpred.data.utils.featurefilters import lowVarianceFilter, highCorrelatio
 from qsprpred.data.utils.scaffolds import Murcko
 from qsprpred.models.models import QSPRsklearn
 
+def prepare_example_dataset(mol_table, target_props, force_build=False):
+    dataset = QSPRDataset.fromMolTable(mol_table, target_props=target_props)
+    if not force_build and not dataset.hasDescriptors:
+        feature_calculator = MoleculeDescriptorsCalculator(
+            descsets=[FingerprintSet(fingerprint_type="MorganFP", radius=3, nBits=2048)])
+        split = scaffoldsplit(dataset=dataset, scaffold=Murcko(), test_fraction=0.2)  # split on Murcko scaffolds
+        lv = lowVarianceFilter(0.05)
+        hc = highCorrelationFilter(0.8)
+        dataset.prepareDataset(
+            split=split,
+            feature_calculators=[feature_calculator],
+            feature_filters=[lv, hc]
+        )
+        dataset.save()
+    else:
+        print("Data set already prepared. Preparation skipped.")
+    print(f"Number of samples train set: {len(dataset.y)}")
+    print(f"Number of samples test set: {len(dataset.y_ind)}, {len(dataset.y_ind) / len(dataset.df) * 100}%")
+
+    return dataset
+
+
 def fetch_example_models(models, target_props, force_build=False):
     """
     Use the example data set to build example models if they do not exist. Reload old models otherwise.
@@ -40,32 +62,10 @@ def fetch_example_models(models, target_props, force_build=False):
         use_existing=True  # use existing data set if it was already compiled before
     )
 
-    # prepare data set for model training
-    dataset = QSPRDataset.fromMolTable(dataset, target_props=target_props)
-    if not force_build and not dataset.hasDescriptors:
-        feature_calculator = MoleculeDescriptorsCalculator(
-            descsets=[FingerprintSet(fingerprint_type="MorganFP", radius=3, nBits=2048)])
-        split = scaffoldsplit(dataset=dataset, scaffold=Murcko(), test_fraction=0.2)  # split on Murcko scaffolds
-        lv = lowVarianceFilter(0.05)
-        hc = highCorrelationFilter(0.8)
-        dataset.prepareDataset(
-            split=split,
-            feature_calculators=[feature_calculator],
-            feature_filters=[lv, hc]
-        )
-        dataset.save()
-    else:
-        print("Data set already prepared. Preparation skipped.")
-    print(f"Number of samples train set: {len(dataset.y)}")
-    print(f"Number of samples test set: {len(dataset.y_ind)}, {len(dataset.y_ind) / len(dataset.df) * 100}%")
-
     # train the models
-    params = {
-        'n_estimators': [50, 100],
-    }
-
     fitted_models = []
-    for model in models:
+    for model, prop in zip(models, target_props):
+        dataset = prepare_example_dataset(dataset, prop, force_build=force_build)
         model = QSPRsklearn(
             base_dir='data',
             data=dataset,
@@ -75,7 +75,6 @@ def fetch_example_models(models, target_props, force_build=False):
 
         # only train if required
         if force_build or not os.path.exists(model.metaFile):
-            model.gridSearch(search_space_gs=params)
             model.evaluate()
             model.fit()
 
