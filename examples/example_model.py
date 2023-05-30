@@ -51,7 +51,6 @@ for plot_type in plot_types: # make a plot for each type (just an example, not r
     ports = (ports[0] + 1, ports[1] + 1)
 
 # info about running plots
-time.sleep(5) # sleep for a while to make sure the plots are ready
 for port in info:
     print(f"The '{info[port]['plot_type']}' plot for model: '{info[port]['model'].name}' is running @ http://localhost:{port}")
 

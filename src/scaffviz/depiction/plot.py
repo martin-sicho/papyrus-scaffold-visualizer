@@ -6,6 +6,7 @@ On: 05.10.22, 16:37
 """
 import copy
 import threading
+import time
 
 import molplotly
 import pandas as pd
@@ -227,7 +228,7 @@ class ModelPerformancePlot(ModelPlot):
                 manifold_cols = []
             else:
                 manifold_cols = manifold_cols.columns.tolist()
-            ds_subset = copy.deepcopy(ds.getDF()[[ds.smilescol] + self.cardProps + ds.indexCols + manifold_cols]) # create a deep copy of the necessary subset to prevent threading issues
+            ds_subset = ds.getDF()[[ds.smilescol] + self.cardProps + ds.indexCols + manifold_cols]
             df_all = ds_subset.merge(df_all, left_index=True, right_index=True)
             mt = MoleculeTable(f"{model.name}_perfplot_{self.plotType}_p{port}", df=df_all, smilescol=ds.smilescol, index_cols=ds.indexCols)
             features = ds.getFeatures(concat=True)
@@ -248,7 +249,7 @@ class ModelPerformancePlot(ModelPlot):
                     plot.plot(
                         mt,
                         title_data=mt.indexCols[0],
-                        card_data=mt.indexCols + [col_label, col_pred, col_err] + cols_probas + self.cardProps,
+                        card_data=mt.indexCols + ["TestSet", col_label, col_pred, col_err] + cols_probas + self.cardProps,
                         color_by=plt_map[self.plotType],
                         port=port,
                         interactive=True,
@@ -266,6 +267,8 @@ class ModelPerformancePlot(ModelPlot):
             if self.asyncExecution:
                 thr = threading.Thread(target=plot_server(port, self.runningApps))
                 thr.start()
+                # sleep to give the server time to start
+                time.sleep(1)
                 self.runningApps[port]['thread'] = thr
             else:
                 server()
