@@ -53,4 +53,4 @@ You can find more example scripts under [examples](./examples).
 
 ## Credits
 
-This work is based on the code developed by Nadieh van Marrewijk and Yorick van Aalst during their internships at the Computational Drug Discovery Group, LACDR, Leiden University.
+This work is based on the code developed by Nadieh van Marrewijk and Yorick van Aalst during their internships at the Computational Drug Discovery Group, LACDR, Leiden University. We would also like to thank the authors of the [molplotly](https://github.com/wjm41/molplotly) package for its continued development and support.
