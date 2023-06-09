@@ -14,6 +14,7 @@ You can install the package from PyPI:
 You can then use the package to extract data from the Papyrus database and visualize it ([examples/example_depiction_papyrus.py](./examples/example_depiction_papyrus.py)):
 
 ```python
+from qsprpred.data.utils.descriptorcalculator import MoleculeDescriptorsCalculator
 from qsprpred.data.utils.descriptorsets import FingerprintSet
 from scaffviz.clustering.manifold import TSNE
 from qsprpred.data.utils.scaffolds import BemisMurcko
@@ -37,14 +38,12 @@ dataset = papyrus.getData(
 dataset.addScaffolds([BemisMurcko(convert_hetero=False, force_single_bonds=False)])
 
 # add Morgan fingerprints to the data set -> these will be used to calculate the t-SNE embedding in 2D
-dataset.addDescriptors([
-    FingerprintSet(fingerprint_type="MorganFP", radius=3, nBits=2048)], 
-    recalculate=False
-)
+desc_calculator = MoleculeDescriptorsCalculator(descsets=[FingerprintSet(fingerprint_type="MorganFP", radius=3, nBits=2048)])
+dataset.addDescriptors(desc_calculator, recalculate=False)
 
 # make an interactive plot that will use t-SNE to embed the data set in 2D (all available descriptors in the data set will be used)
 plt = Plot(TSNE(perplexity=150))
-plt.plot(dataset, recalculate=True, mols_per_scaffold_group=5, card_data=["all_doc_ids"], title_data='all_doc_ids')
+plt.plot(dataset, recalculate=True, mols_per_scaffold_group=5, card_data=["all_doc_ids"], title_data='InChIKey')
 ```
 
 You can find more example scripts under [examples](./examples).
@@ -54,4 +53,4 @@ You can find more example scripts under [examples](./examples).
 
 ## Credits
 
-This work is based on the code developed by Nadieh van Marrewijk and Yorick van Aalst during their internships at the Computational Drug Discovery Group, LACDR, Leiden University.
+This work is based on the code developed by Nadieh van Marrewijk and Yorick van Aalst during their internships at the Computational Drug Discovery Group, LACDR, Leiden University. We would also like to thank the authors of the [molplotly](https://github.com/wjm41/molplotly) package for its continued development and support.

@@ -12,8 +12,12 @@ from scaffviz.clustering.manifold import Manifold
 class ManifoldTable(MoleculeTable):
 
     @staticmethod
-    def fromMolTable(mol_table : MoleculeTable):
-        return ManifoldTable(mol_table.name, mol_table.getDF(), smilescol=mol_table.smilescol, store_dir=mol_table.storeDir)
+    def fromMolTable(mol_table : MoleculeTable, name=None):
+        name = name if name is not None else mol_table.name
+        mt = ManifoldTable(name, mol_table.getDF(), smilescol=mol_table.smilescol, store_dir=mol_table.storeDir, index_cols=mol_table.indexCols)
+        mt.descriptors = mol_table.descriptors
+        mt.descriptorCalculators = mol_table.descriptorCalculators
+        return mt
 
     def getManifoldData(self, manifold: Manifold):
         return self.getSubset(str(manifold))
@@ -24,6 +28,8 @@ class ManifoldTable(MoleculeTable):
         if manifold_data is not None:
             manifold_cols = manifold_data.columns.tolist()
         if recalculate or manifold_data is None:
+            if not self.hasDescriptors:
+                raise ValueError("Descriptors must be calculated before adding manifold data.")
             X = manifold.fit_transform(self.getDescriptors())
             manifold_cols = []
             x = np.transpose(X)
