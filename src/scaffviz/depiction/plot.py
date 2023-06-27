@@ -104,7 +104,7 @@ class Plot:
         # interactive plot:
         excluded = df.columns[df.columns.str.contains('RDMol')].tolist() + list(table.getDescriptorNames()) + manifold_cols + df.columns[~df.columns.isin(card_data)].tolist()
         included = [title_data] + [col for col in df.columns if col not in excluded]
-        smiles_col = [table.smilescol] + table.getScaffoldNames() if table.hasScaffolds else [table.smilescol]
+        smiles_col = [table.smilesCol] + table.getScaffoldNames() if table.hasScaffolds else [table.smilesCol]
         app_scatter = molplotly.add_molecules(fig=fig,
           df=df,
           smiles_col=smiles_col,
@@ -228,9 +228,9 @@ class ModelPerformancePlot(ModelPlot):
                 manifold_cols = []
             else:
                 manifold_cols = manifold_cols.columns.tolist()
-            ds_subset = ds.getDF()[[ds.smilescol] + self.cardProps + ds.indexCols + manifold_cols]
+            ds_subset = ds.getDF()[[ds.smilesCol] + self.cardProps + ds.indexCols + manifold_cols]
             df_all = ds_subset.merge(df_all, left_index=True, right_index=True)
-            mt = MoleculeTable(f"{model.name}_perfplot_{self.plotType}_p{port}", df=df_all, smilescol=ds.smilescol, index_cols=ds.indexCols)
+            mt = MoleculeTable(f"{model.name}_perfplot_{self.plotType}_p{port}", df=df_all, smiles_col=ds.smilesCol, index_cols=ds.indexCols)
             features = ds.getFeatures(concat=True)
             calc = CustomDescriptorsCalculator([DataFrameDescriptorSet(features)])
             mt.addCustomDescriptors(calc)
