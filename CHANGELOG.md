@@ -2,7 +2,7 @@
 
 Previous version: 0.5.0
 
-Current version: 0.4.0
+Current version: 0.6.0
 
 
 ## Fixes
