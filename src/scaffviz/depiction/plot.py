@@ -230,7 +230,7 @@ class ModelPerformancePlot(ModelPlot):
                 manifold_cols = manifold_cols.columns.tolist()
             ds_subset = ds.getDF()[[ds.smilesCol] + self.cardProps + ds.indexCols + manifold_cols]
             df_all = ds_subset.merge(df_all, left_index=True, right_index=True)
-            mt = MoleculeTable(f"{model.name}_perfplot_{self.plotType}_p{port}", df=df_all, smilesCol=ds.smilesCol, index_cols=ds.indexCols)
+            mt = MoleculeTable(f"{model.name}_perfplot_{self.plotType}_p{port}", df=df_all, smiles_col=ds.smilesCol, index_cols=ds.indexCols)
             features = ds.getFeatures(concat=True)
             calc = CustomDescriptorsCalculator([DataFrameDescriptorSet(features)])
             mt.addCustomDescriptors(calc)
