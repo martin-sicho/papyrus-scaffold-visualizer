@@ -8,21 +8,64 @@ import os
 
 from qsprpred.data.data import QSPRDataset
 from qsprpred.data.sources.papyrus import Papyrus
-from qsprpred.data.utils.datasplitters import scaffoldsplit
+from qsprpred.data.utils.datasplitters import ScaffoldSplit
 from qsprpred.data.utils.descriptorcalculator import MoleculeDescriptorsCalculator
 from qsprpred.data.utils.descriptorsets import FingerprintSet
-from qsprpred.data.utils.featurefilters import lowVarianceFilter, highCorrelationFilter
+from qsprpred.data.utils.featurefilters import LowVarianceFilter, HighCorrelationFilter
 from qsprpred.data.utils.scaffolds import Murcko
 from qsprpred.models.models import QSPRsklearn
 
+
+def fetch_example_dataset():
+    """
+    Use Papyrus to fetch the example set of ligands for the P51681 target.
+
+    Returns:
+        MoleculeTable: the example data set
+    """
+
+    acc_keys = ["P51681"]
+    name = "P51681_LIGANDS_nostereo"
+    quality = "low"
+    papyrus = Papyrus(
+        data_dir="./data",
+        stereo=False,
+        descriptors=None,
+        plus_only=False
+    )
+    return papyrus.getData(
+        acc_keys,
+        quality,
+        name=name,
+        use_existing=True  # use existing data set if it was already compiled before
+    )
+
+
 def prepare_example_dataset(mol_table, target_props, force_build=False):
+    """
+    Converts a molecule table to a QSPRDataset and prepares it for training.
+
+    Args:
+        mol_table: molecule table to convert
+        target_props: target properties to use as specified in the QSPRPred package
+        force_build: if True, the dataset will be prepared even if it already exists
+
+    Returns:
+        QSPRDataset: the prepared data set
+
+    """
+
     dataset = QSPRDataset.fromMolTable(mol_table, target_props=target_props)
     if not force_build and not dataset.hasDescriptors:
         feature_calculator = MoleculeDescriptorsCalculator(
-            descsets=[FingerprintSet(fingerprint_type="MorganFP", radius=3, nBits=2048)])
-        split = scaffoldsplit(dataset=dataset, scaffold=Murcko(), test_fraction=0.2)  # split on Murcko scaffolds
-        lv = lowVarianceFilter(0.05)
-        hc = highCorrelationFilter(0.8)
+            desc_sets=[
+                FingerprintSet(fingerprint_type="MorganFP", radius=3, nBits=2048)])
+        split = ScaffoldSplit(
+            scaffold=Murcko(),
+            test_fraction=0.2
+        )
+        lv = LowVarianceFilter(0.05)
+        hc = HighCorrelationFilter(0.8)
         dataset.prepareDataset(
             split=split,
             feature_calculators=[feature_calculator],
@@ -32,7 +75,8 @@ def prepare_example_dataset(mol_table, target_props, force_build=False):
     else:
         print("Data set already prepared. Preparation skipped.")
     print(f"Number of samples train set: {len(dataset.y)}")
-    print(f"Number of samples test set: {len(dataset.y_ind)}, {len(dataset.y_ind) / len(dataset.df) * 100}%")
+    print(
+        f"Number of samples test set: {len(dataset.y_ind)}, {len(dataset.y_ind) / len(dataset.df) * 100}%")
 
     return dataset
 
@@ -50,17 +94,7 @@ def fetch_example_models(models, target_props, force_build=False):
         list of fitted and evaluated models
     """
 
-    # use Papyrus to fetch the data set
-    acc_keys = ["P51681"]
-    name = "P51681_LIGANDS_nostereo"
-    quality = "low"
-    papyrus = Papyrus(data_dir="./data", stereo=False)
-    dataset = papyrus.getData(
-        acc_keys,
-        quality,
-        name=name,
-        use_existing=True  # use existing data set if it was already compiled before
-    )
+    dataset = fetch_example_dataset()
 
     # train the models
     fitted_models = []

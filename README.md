@@ -1,7 +1,6 @@
 # Papyrus Scaffold Visualizer
 
-Extraction and interactive visualization of data extracted from [Papyrus](https://chemrxiv.org/engage/chemrxiv/article-details/617aa2467a002162403d71f0). This package allows you to quickly filter out relevant data from the Papyrus database and make an interactive visualization of the compounds in the data set. By default, the compounds are grouped and colored by scaffold, but you can also customize the grouping and coloring by other means. If you want to quickly analyze what kind of compounds you have in the data set, this can help you to do so effortlessly. The assembled data set is also a good starting point for machine learning.
-
+This package is for everyone who wants to quickly explore publicly available data before conducting further analysis or any kind of machine learning. Extraction and interactive visualization of any public data set with the help of [Papyrus](https://jcheminf.biomedcentral.com/articles/10.1186/s13321-022-00672-x). This package allows you to quickly filter out relevant data for your target of interest and will make an interactive visualization of the compounds in the data set. By default, the compounds are grouped and colored by scaffold, but you can also customize the grouping and coloring by other means. Thanks to the nature of Papyrus, the assembled data set can also be used for subsequent machine learning tasks with very little effort.
 
 ## Getting started
 
@@ -11,7 +10,7 @@ You can install the package from PyPI:
    pip install git+https://github.com/martin-sicho/papyrus-scaffold-visualizer.git@main
 ```
 
-You can then use the package to extract data from the Papyrus database and visualize it ([examples/example_depiction_papyrus.py](./examples/example_depiction_papyrus.py)):
+Here is an example script that extracts a data set and makes the visualization ([examples/example_depiction_papyrus.py](./examples/example_depiction_papyrus.py)):
 
 ```python
 from qsprpred.data.utils.descriptorcalculator import MoleculeDescriptorsCalculator
@@ -21,12 +20,17 @@ from qsprpred.data.utils.scaffolds import BemisMurcko
 from qsprpred.data.sources.papyrus import Papyrus
 from scaffviz.depiction.plot import Plot
 
-acc_keys = ["P51681"] # replace with your own accession key
-name = "P51681_LIGANDS_nostereo" # replace with your own name for the output data set file
-quality = "low" # choose minimum quality from {"high", "medium", "low"}
+acc_keys = ["P51681"]  # accession keys of the proteins to fetch data for
+name = "P51681_LIGANDS_nostereo"  # name of the data set
+quality = "low"  # choose minimum quality from {"high", "medium", "low"}
 
-# fetches the latest version of Papyrus if not already available and filters out the relevant data
-papyrus = Papyrus(data_dir="./data", stereo=False)
+# fetch data from Papyrus for the given targets (may take a while)
+papyrus = Papyrus(
+    data_dir="./data",  # where to store the data
+    stereo=False,  # do not consider stereochemistry
+    plus_only=True,  # only use the high quality data set
+    descriptors=None,  # do not download descriptors (we will calculate them later)
+)
 dataset = papyrus.getData(
     acc_keys,
     quality,
@@ -34,16 +38,32 @@ dataset = papyrus.getData(
     use_existing=True # use existing data set if it was already compiled before
 )
 
-# add Murcko scaffolds to the data set -> will be used to group compounds inside the plot
-dataset.addScaffolds([BemisMurcko(convert_hetero=False, force_single_bonds=False)])
+# add generic scaffolds to the data set
+# these will be used to group the molecules
+dataset.addScaffolds([
+    BemisMurcko(
+        convert_hetero=True,
+        force_single_bonds=False
+    )]
+)
 
-# add Morgan fingerprints to the data set -> these will be used to calculate the t-SNE embedding in 2D
-desc_calculator = MoleculeDescriptorsCalculator(descsets=[FingerprintSet(fingerprint_type="MorganFP", radius=3, nBits=2048)])
+# add Morgan fingerprints to the data set
+# these will be used to calculate the t-SNE embedding in 2D
+desc_calculator = MoleculeDescriptorsCalculator(desc_sets=[
+    FingerprintSet(fingerprint_type="MorganFP", radius=3, nBits=2048)
+])
 dataset.addDescriptors(desc_calculator, recalculate=False)
 
-# make an interactive plot that will use t-SNE to embed the data set in 2D (all available descriptors in the data set will be used)
+# make an interactive plot that will use t-SNE to embed the data set in 2D
+# (all available descriptors in the data set will be used, not just selected features)
 plt = Plot(TSNE(perplexity=150))
-plt.plot(dataset, recalculate=True, mols_per_scaffold_group=5, card_data=["all_doc_ids"], title_data='InChIKey')
+plt.plot(
+    dataset,
+    recalculate=True, # recalculate the t-SNE embedding each time this is run
+    mols_per_scaffold_group=5,  # smaller groups will be merged into 'Other' group
+    card_data=["all_doc_ids"],  # what to show on the molecule cards
+    title_data='InChIKey'   # Data to show in the title of the molecule cards
+)
 ```
 
 You can find more example scripts under [examples](./examples).
