@@ -4,7 +4,6 @@ example_model.py
 Created by: Martin Sicho
 On: 22.05.23, 9:55
 """
-import time
 
 from qsprpred.models.tasks import TargetTasks
 

@@ -14,10 +14,10 @@ from scaffviz.depiction.plot import Plot
 
 if __name__ == "__main__":
 
-    dataset = MoleculeTable.fromSMILES('smiles', ['CN1C2CCC1C(C(C2)OC(=O)C3=CC=CC=C3)C(=O)OC', 'O=C(OCCN(CC)CC)c1ccc(N)cc1', 'CCO'], store_dir='data')
+    dataset = MoleculeTable.fromSMILES('smiles', ['CN1C2CCC1C(C(C2)OC(=O)C3=CC=CC=C3)C(=O)OC', 'O=C(OCCN(CC)CC)c1ccc(N)cc1', 'CCO'])
     dataset.addProperty("Name", ["cocaine", "procaine", "ethanol"])
 
-    desc_calculator = MoleculeDescriptorsCalculator(descsets=[FingerprintSet(fingerprint_type="MorganFP", radius=3, nBits=2048)])
+    desc_calculator = MoleculeDescriptorsCalculator(desc_sets=[FingerprintSet(fingerprint_type="MorganFP", radius=3, nBits=2048)])
     dataset.addDescriptors(desc_calculator, recalculate=True)
     dataset.addScaffolds([BemisMurcko(convert_hetero=False)])
 
