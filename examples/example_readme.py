@@ -44,7 +44,7 @@ dataset.addDescriptors(desc_calculator, recalculate=False)
 plt = Plot(TSNE(perplexity=150))
 plt.plot(
     dataset,
-    recalculate=True, # recalculate the t-SNE embedding each time this is run
+    recalculate=False,  # do not recalculate the t-SNE embedding each time this is run
     mols_per_scaffold_group=5,  # smaller groups will be merged into 'Other' group
     card_data=["all_doc_ids"],  # what to show on the molecule cards
     title_data='InChIKey'   # Data to show in the title of the molecule cards
