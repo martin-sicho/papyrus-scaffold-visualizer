@@ -17,7 +17,7 @@ from qsprpred.data.utils.descriptorsets import DataFrameDescriptorSet
 from scaffviz.clustering.manifold import Manifold
 from qsprpred.data.data import MoleculeTable, QSPRDataset
 from scaffviz.data.manifold_table import ManifoldTable
-from qsprpred.models.models import QSPRModel
+from qsprpred.models.interfaces import QSPRModel
 from qsprpred.plotting.interfaces import ModelPlot
 from typing import List, Literal
 from qsprpred.models.tasks import ModelTasks

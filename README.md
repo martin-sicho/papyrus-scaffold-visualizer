@@ -4,7 +4,7 @@ This package is for everyone who wants to quickly explore publicly available dat
 
 ## Getting started
 
-You can install the package from PyPI:
+You can install the package from this repository using pip:
 
 ```bash
    pip install git+https://github.com/martin-sicho/papyrus-scaffold-visualizer.git@main

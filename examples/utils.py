@@ -13,7 +13,7 @@ from qsprpred.data.utils.descriptorcalculator import MoleculeDescriptorsCalculat
 from qsprpred.data.utils.descriptorsets import FingerprintSet
 from qsprpred.data.utils.featurefilters import LowVarianceFilter, HighCorrelationFilter
 from qsprpred.data.utils.scaffolds import Murcko
-from qsprpred.models.models import QSPRsklearn
+from qsprpred.models.sklearn import SklearnModel
 
 
 def fetch_example_dataset():
@@ -100,7 +100,7 @@ def fetch_example_models(models, target_props, force_build=False):
     fitted_models = []
     for model, prop in zip(models, target_props):
         dataset = prepare_example_dataset(dataset, prop, force_build=force_build)
-        model = QSPRsklearn(
+        model = SklearnModel(
             base_dir='data',
             data=dataset,
             alg=model,
@@ -109,8 +109,11 @@ def fetch_example_models(models, target_props, force_build=False):
 
         # only train if required
         if force_build or not os.path.exists(model.metaFile):
-            model.evaluate()
-            model.fit()
+            from qsprpred.models.assessment_methods import CrossValAssessor, \
+                TestSetAssessor
+            CrossValAssessor()(model)
+            TestSetAssessor()(model)
+            model.fitAttached()
 
         fitted_models.append(model)
 
