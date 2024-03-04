@@ -5,7 +5,7 @@ Created by: Martin Sicho
 On: 17.01.23, 17:20
 """
 import numpy as np
-from qsprpred.data.data import MoleculeTable
+from qsprpred.data import MoleculeTable
 from scaffviz.clustering.manifold import Manifold
 
 
@@ -16,7 +16,6 @@ class ManifoldTable(MoleculeTable):
         name = name if name is not None else mol_table.name
         mt = ManifoldTable(name, mol_table.getDF(), smiles_col=mol_table.smilesCol, store_dir=mol_table.storeDir, index_cols=mol_table.indexCols)
         mt.descriptors = mol_table.descriptors
-        mt.descriptorCalculators = mol_table.descriptorCalculators
         return mt
 
     def getManifoldData(self, manifold: Manifold):
@@ -28,7 +27,7 @@ class ManifoldTable(MoleculeTable):
         if manifold_data is not None:
             manifold_cols = manifold_data.columns.tolist()
         if recalculate or manifold_data is None:
-            if not self.hasDescriptors:
+            if not self.hasDescriptors():
                 raise ValueError("Descriptors must be calculated before adding manifold data.")
             X = manifold.fit_transform(self.getDescriptors())
             manifold_cols = []

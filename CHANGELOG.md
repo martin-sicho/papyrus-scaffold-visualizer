@@ -1,8 +1,8 @@
 # Change Log
 
-Previous version: 0.5.0
+Previous version: 0.6.0
 
-Current version: 0.6.0
+Current version: 0.7.0
 
 
 ## Fixes
@@ -11,7 +11,7 @@ None.
 
 ## Changes
 
-- Supports only [QSPRPred](https://github.com/CDDLeiden/QSPRPred) v2.0.1 or higher
+- Update to [QSPRPred](https://github.com/CDDLeiden/QSPRPred) v3.0.0 and newer.
 
 ## New Features
 

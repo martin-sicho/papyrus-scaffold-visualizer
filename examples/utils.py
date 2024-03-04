@@ -4,16 +4,16 @@ utils
 Created by: Martin Sicho
 On: 22.05.23, 10:12
 """
+import logging
 import os
 
-from qsprpred.data.data import QSPRDataset
+from qsprpred.data import QSPRDataset, MoleculeTable
 from qsprpred.data.sources.papyrus import Papyrus
-from qsprpred.data.utils.datasplitters import ScaffoldSplit
-from qsprpred.data.utils.descriptorcalculator import MoleculeDescriptorsCalculator
-from qsprpred.data.utils.descriptorsets import FingerprintSet
-from qsprpred.data.utils.featurefilters import LowVarianceFilter, HighCorrelationFilter
-from qsprpred.data.utils.scaffolds import Murcko
-from qsprpred.models.sklearn import SklearnModel
+from qsprpred.data import ScaffoldSplit
+from qsprpred.data.descriptors.fingerprints import MorganFP
+from qsprpred.data.processing.feature_filters import LowVarianceFilter, HighCorrelationFilter
+from qsprpred.data.chem.scaffolds import Murcko
+from qsprpred.models.scikit_learn import SklearnModel
 
 
 def fetch_example_dataset():
@@ -23,20 +23,25 @@ def fetch_example_dataset():
     Returns:
         MoleculeTable: the example data set
     """
-
-    acc_keys = ["P51681"]
+    # try to load from file
     name = "P51681_LIGANDS_nostereo"
-    quality = "low"
+    try:
+        return MoleculeTable.fromFile(f"./data/{name}/{name}_meta.json")
+    except FileNotFoundError:
+        logging.warning("Data set not found. Fetching from Papyrus.")
+    # otherwise fetch from Papyrus
+    acc_keys = ["P51681"]
+    quality = "high"
     papyrus = Papyrus(
         data_dir="./data",
         stereo=False,
         descriptors=None,
-        plus_only=False
+        plus_only=True
     )
     return papyrus.getData(
+        name,
         acc_keys,
         quality,
-        name=name,
         use_existing=True  # use existing data set if it was already compiled before
     )
 
@@ -56,10 +61,9 @@ def prepare_example_dataset(mol_table, target_props, force_build=False):
     """
 
     dataset = QSPRDataset.fromMolTable(mol_table, target_props=target_props)
-    if not force_build and not dataset.hasDescriptors:
-        feature_calculator = MoleculeDescriptorsCalculator(
-            desc_sets=[
-                FingerprintSet(fingerprint_type="MorganFP", radius=3, nBits=2048)])
+    dataset.featureNames = mol_table.getDescriptorNames()
+    dataset.loadDescriptorsToSplits()
+    if not force_build and not dataset.hasDescriptors():
         split = ScaffoldSplit(
             scaffold=Murcko(),
             test_fraction=0.2
@@ -68,7 +72,7 @@ def prepare_example_dataset(mol_table, target_props, force_build=False):
         hc = HighCorrelationFilter(0.8)
         dataset.prepareDataset(
             split=split,
-            feature_calculators=[feature_calculator],
+            feature_calculators=[MorganFP(radius=3, nBits=2048)],
             feature_filters=[lv, hc]
         )
         dataset.save()
@@ -98,23 +102,25 @@ def fetch_example_models(models, target_props, force_build=False):
 
     # train the models
     fitted_models = []
+    used_datasets = []
     for model, prop in zip(models, target_props):
         dataset = prepare_example_dataset(dataset, prop, force_build=force_build)
         model = SklearnModel(
             base_dir='data',
-            data=dataset,
             alg=model,
             name=model.__name__
         )
 
         # only train if required
         if force_build or not os.path.exists(model.metaFile):
-            from qsprpred.models.assessment_methods import CrossValAssessor, \
+            from qsprpred.models.assessment.methods import CrossValAssessor, \
                 TestSetAssessor
-            CrossValAssessor()(model)
-            TestSetAssessor()(model)
-            model.fitAttached()
+            metric = "roc_auc" if dataset.targetProperties[0].task.isClassification() else "r2"
+            CrossValAssessor(scoring=metric)(model, dataset)
+            TestSetAssessor(scoring=metric)(model, dataset)
+            model.fitDataset(dataset)
 
         fitted_models.append(model)
+        used_datasets.append(dataset)
 
-    return fitted_models
+    return fitted_models, used_datasets

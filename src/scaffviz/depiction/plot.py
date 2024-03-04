@@ -4,23 +4,22 @@ plot
 Created by: Martin Sicho
 On: 05.10.22, 16:37
 """
-import copy
 import threading
 import time
 
 import molplotly
 import pandas as pd
 import plotly.express as px
-from qsprpred.data.utils.descriptorcalculator import CustomDescriptorsCalculator
-from qsprpred.data.utils.descriptorsets import DataFrameDescriptorSet
+from qsprpred import ModelTasks
+from qsprpred.data import MoleculeTable, QSPRDataset
+from qsprpred.data.descriptors.sets import DataFrameDescriptorSet
+from qsprpred.models import QSPRModel
+from qsprpred.plotting.base_plot import ModelPlot
 
 from scaffviz.clustering.manifold import Manifold
-from qsprpred.data.data import MoleculeTable, QSPRDataset
-from scaffviz.data.manifold_table import ManifoldTable
-from qsprpred.models.interfaces import QSPRModel
-from qsprpred.plotting.interfaces import ModelPlot
 from typing import List, Literal
-from qsprpred.models.tasks import ModelTasks
+
+from scaffviz.data.manifold_table import ManifoldTable
 
 
 class Plot:
@@ -123,33 +122,26 @@ class Plot:
 
 class ModelPerformancePlot(ModelPlot):
 
-    def __init__(self, manifold : Manifold, models: List[QSPRModel], ports, datasets : List[QSPRDataset] = None, card_props = None, plot_type = Literal["errors", "splits", "predictions", "labels"], async_execution=True):
+    def __init__(self, manifold : Manifold, models: List[QSPRModel], datasets : List[QSPRDataset], ports: List[int],card_props = None, plot_type = Literal["errors", "splits", "predictions", "labels"], async_execution=True):
         super().__init__(models)
+        # some checks
+        if len(ports) != len(set(ports)):
+            raise ValueError("Ports must be unique.")
+        if len(datasets) != len(models):
+            raise ValueError("Number of models and datasets does not match.")
+        if len(ports) != len(models):
+            raise ValueError("Number of models and ports does not match.")
+        # assign attributes
         self.manifold = manifold
         self.plotType = plot_type
         self.ports = ports
         self.runningApps = dict()
         self.asyncExecution = async_execution
         self.cardProps = card_props if card_props else []
-
-        # check if we have data for all models
-        self.datasets = datasets if datasets else dict()
-        if not self.datasets:
-            for model in self.models:
-                self.datasets[model] = model.data
-
-        # check if ports unique
-        if len(self.ports) != len(set(self.ports)):
-            raise ValueError("Ports must be unique.")
-        
-        if len(self.datasets) != len(self.models):
-            raise ValueError("Number of models and datasets does not match.")
-
-        if len(self.ports) != len(self.models):
-            raise ValueError("Number of models and ports does not match.")
-
-        if not all(self.datasets):
-            raise ValueError("Some models have no associated data. Specify the data used to train each model with the 'datasets' argument or provide a model with a 'QSPRDataset' attached.")
+        # initialize the mapping of models to their respective data sets
+        self.datasets = dict()
+        for model, dataset in zip(models, datasets):
+            self.datasets[model] = dataset
 
     def getSupportedTasks(self):
         """Return a list of tasks supported by this plotter."""
@@ -215,7 +207,7 @@ class ModelPerformancePlot(ModelPlot):
     def make(self, show=True, save=False):
         """Make the plot."""
 
-        for model_idx, model in enumerate(self.models):
+        for model_idx, model in enumerate(self.datasets.keys()):
             port = self.ports[model_idx]
             ds = self.datasets[model]
             df_cv, col_label, col_pred, col_err, cols_probas = self.getCVData(model, model.targetProperties[0])
@@ -232,8 +224,7 @@ class ModelPerformancePlot(ModelPlot):
             df_all = ds_subset.merge(df_all, left_index=True, right_index=True)
             mt = MoleculeTable(f"{model.name}_perfplot_{self.plotType}_p{port}", df=df_all, smiles_col=ds.smilesCol, index_cols=ds.indexCols)
             features = ds.getFeatures(concat=True)
-            calc = CustomDescriptorsCalculator([DataFrameDescriptorSet(features)])
-            mt.addCustomDescriptors(calc)
+            mt.addDescriptors([DataFrameDescriptorSet(features)])
 
             # create a server for the current plot
             plt_map = {
