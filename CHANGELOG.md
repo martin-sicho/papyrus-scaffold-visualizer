@@ -8,6 +8,7 @@ Current version: 0.7.1
 ## Fixes
 
 - Correct version number.
+- Make sure latest QSPRpred is installed.
 
 ## Changes
 
