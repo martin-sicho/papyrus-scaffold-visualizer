@@ -5,7 +5,7 @@ Created by: Martin Sicho
 On: 10.10.22, 16:05
 """
 from qsprpred.data import MoleculeTable
-from qsprpred.data.chem.scaffolds import Murcko
+from qsprpred.data.chem.scaffolds import BemisMurcko
 from qsprpred.data.descriptors.fingerprints import MorganFP
 
 from scaffviz.clustering.manifold import TSNE
@@ -17,7 +17,7 @@ if __name__ == "__main__":
     dataset.addProperty("Name", ["cocaine", "procaine", "ethanol"])
     # add descriptors and scaffolds
     dataset.addDescriptors([MorganFP(radius=3, nBits=2048)], recalculate=True)
-    dataset.addScaffolds([Murcko()])
+    dataset.addScaffolds([BemisMurcko()])
     # plot the dataset
     plt = Plot(TSNE(perplexity=1))
     plt.plot(dataset, recalculate=True, mols_per_scaffold_group=1, title_data="Name",card_data=["Name"], port=9292)
