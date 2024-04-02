@@ -1,8 +1,8 @@
 # Change Log
 
-Previous version: 0.7.1
+Previous version: 0.7.2
 
-Current version: 0.7.2
+Current version: 0.7.3
 
 
 ## Fixes
