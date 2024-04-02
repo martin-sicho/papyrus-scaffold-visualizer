@@ -1,14 +1,13 @@
 # Change Log
 
-Previous version: 0.7.0
+Previous version: 0.7.1
 
-Current version: 0.7.1
+Current version: 0.7.2
 
 
 ## Fixes
 
-- Correct version number.
-- Make sure latest QSPRpred is installed.
+- Corrected scaffold import and QSPRpred installation method.
 
 ## Changes
 
