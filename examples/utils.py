@@ -12,7 +12,7 @@ from qsprpred.data.sources.papyrus import Papyrus
 from qsprpred.data import ScaffoldSplit
 from qsprpred.data.descriptors.fingerprints import MorganFP
 from qsprpred.data.processing.feature_filters import LowVarianceFilter, HighCorrelationFilter
-from qsprpred.data.chem.scaffolds import Murcko
+from qsprpred.data.chem.scaffolds import BemisMurcko
 from qsprpred.models.scikit_learn import SklearnModel
 
 
@@ -65,7 +65,7 @@ def prepare_example_dataset(mol_table, target_props, force_build=False):
     dataset.loadDescriptorsToSplits()
     if not force_build and not dataset.hasDescriptors():
         split = ScaffoldSplit(
-            scaffold=Murcko(),
+            scaffold=BemisMurcko(),
             test_fraction=0.2
         )
         lv = LowVarianceFilter(0.05)

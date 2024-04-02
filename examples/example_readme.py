@@ -1,4 +1,4 @@
-from qsprpred.data.chem.scaffolds import Murcko
+from qsprpred.data.chem.scaffolds import BemisMurcko
 from qsprpred.data.descriptors.fingerprints import MorganFP
 from scaffviz.clustering.manifold import TSNE
 from qsprpred.data.sources.papyrus import Papyrus
@@ -24,7 +24,7 @@ dataset = papyrus.getData(
 
 # add generic scaffolds to the data set
 # these will be used to group the molecules
-dataset.addScaffolds([Murcko()])
+dataset.addScaffolds([BemisMurcko()])
 
 # add Morgan fingerprints to the data set
 # these will be used to calculate the t-SNE embedding in 2D
