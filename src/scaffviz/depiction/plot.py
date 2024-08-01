@@ -24,7 +24,7 @@ from scaffviz.data.manifold_table import ManifoldTable
 
 class Plot:
 
-    def __init__(self, manifold : Manifold, save_manifold : bool = True):
+    def __init__(self, manifold: Manifold | None = None, save_manifold: bool = True):
         """
         Initialize a plotting object for the given `Manifold`.
 
@@ -41,7 +41,7 @@ class Plot:
     def getOpenApps(self):
         return self.open_apps
 
-    def plot(self, table : MoleculeTable, x : str = None, y : str = None, color_by : str = None, card_data = tuple(), title_data : str = 'SMILES', port=9292, recalculate=False, mols_per_scaffold_group : int = 10, interactive = True, viewport_height = "100%",  **kwargs):
+    def plot(self, table : MoleculeTable, x : str = None, y : str = None, color_by : str = None, card_data = tuple(), title_data : str | None = None, port=9292, recalculate=False, mols_per_scaffold_group : int = 10, interactive = True, viewport_height = "100%",  **kwargs):
         """
         Plot the dataset using the manifold or custom `DataSet` fields. The plot is interactive and runs as a web app on the specified port.
 
@@ -62,6 +62,7 @@ class Plot:
         Returns:
             `None`
         """
+        title_data = title_data or table.smilesCol
         table = ManifoldTable.fromMolTable(table, name=f"{table.name}_manifold")
         manifold_cols = table.addManifoldData(self.manifold, recalculate=recalculate) if self.manifold else (x, y)
         if not manifold_cols[0] and not manifold_cols[1]:
@@ -101,7 +102,7 @@ class Plot:
             return fig
 
         # interactive plot:
-        excluded = df.columns[df.columns.str.contains('RDMol')].tolist() + list(table.getDescriptorNames()) + manifold_cols + df.columns[~df.columns.isin(card_data)].tolist()
+        excluded = df.columns[df.columns.str.contains('RDMol')].tolist() + list(table.getDescriptorNames()) + list(manifold_cols) + df.columns[~df.columns.isin(card_data)].tolist()
         included = [title_data] + [col for col in df.columns if col not in excluded]
         smiles_col = [table.smilesCol] + table.getScaffoldNames() if table.hasScaffolds else [table.smilesCol]
         app_scatter = molplotly.add_molecules(fig=fig,
