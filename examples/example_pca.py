@@ -1,8 +1,8 @@
 """
 example_coloring
 
-Created by: Martin Sicho
-On: 02.11.22, 14:09
+Created by: Lide Schoenmaker
+On: 08/11/24 14.01
 """
 from qsprpred.data.descriptors.sets import DrugExPhyschem
 from utils import fetch_example_dataset
