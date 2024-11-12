@@ -84,3 +84,27 @@ class TSNE(Manifold):
 
     def __str__(self):
         return "TSNE"
+
+class PCA(Manifold):
+
+    def __init__(self, *args, **kwargs):
+        from sklearn.decomposition import PCA
+        self._skPCA = PCA(
+            *args, **kwargs
+        )
+
+    def fit(self, X):
+        self._skPCA.fit(X)
+        return self
+
+    def transform(self, X):
+        return self._skPCA.fit_transform(X)
+
+    def fit_transform(self, X):
+        return self._skPCA.fit_transform(X)
+        
+    def name(self, i):
+        return f"PC_{i} ({self._skPCA.explained_variance_ratio_[i]*100:.1f} %)"
+
+    def __str__(self):
+        return "PCA"
