@@ -108,3 +108,24 @@ class PCA(Manifold):
 
     def __str__(self):
         return "PCA"
+
+class UMAP(Manifold):
+
+    def __init__(self, *args, **kwargs):
+        import umap
+        self._umapUMAP = umap.UMAP(
+            *args, **kwargs
+        )
+
+    def fit(self, X):
+        self._umapUMAP.fit(X)
+        return self
+
+    def transform(self, X):
+        return self._umapUMAP.fit_transform(X)
+
+    def fit_transform(self, X):
+        return self._umapUMAP.fit_transform(X)
+
+    def __str__(self):
+        return "UMAP"
