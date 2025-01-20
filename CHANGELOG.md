@@ -1,13 +1,13 @@
 # Change Log
 
-Previous version: 0.7.2
+Previous version: 0.7.3
 
-Current version: 0.7.3
+Current version: 0.7.4
 
 
 ## Fixes
 
-- Corrected scaffold import and QSPRpred installation method.
+None.
 
 ## Changes
 
@@ -15,4 +15,4 @@ None.
 
 ## New Features
 
-None.
+- Added PCA and UMAP wrappers.
